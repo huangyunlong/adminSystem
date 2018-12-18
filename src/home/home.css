@@ -1,0 +1,48 @@
+.home {
+  --padding: 10px;
+
+  .head {
+    height: 50px;
+    width: 100%;
+    border-bottom: 1px solid;
+    padding: var(--padding);
+    display: flex;
+    align-items: center;
+
+    .title {
+      width: 100px;
+    }
+
+    .user {
+      flex: 1;
+      text-align: right;
+      margin-right: 20px;
+    }
+
+    .logout {
+      width: 60px;
+    }
+  }
+
+  .content {
+    height: calc(100% - 50px);
+    display: flex;
+    .nav {
+      box-sizing: border-box;
+      width: 200px;
+      height: 100%;
+      overflow: auto;
+
+      .nav__menu {
+        height: 100%;
+      }
+    }
+
+    .body {
+      padding: var(--padding);
+      flex: 1;
+      height: 100%;
+      overflow: hidden;
+    }
+  }
+}

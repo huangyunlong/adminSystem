@@ -1,0 +1,7 @@
+.invoice{
+    --padding: 10px;
+
+    .editor{
+        margin-bottom:10px;
+    }
+}
