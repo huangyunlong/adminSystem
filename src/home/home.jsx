@@ -13,25 +13,11 @@ class Home extends React.Component {
   @observable.deep states = {
     homeStyle: {
       height: 0
-    },
-    current: '',
-    openKey: ''
+    }
   };
 
   componentWillMount() {
     this.states.homeStyle.height = window.innerHeight;
-    let curentRoute = this.props.location.pathname.split('/')[1]; //获取当前的路由
-    this.states.current = curentRoute
-    if(curentRoute=='useNotice' || curentRoute=='privacy'|| curentRoute=='invoice'){
-       this.states.openKey = 'sub1'
-    }else if(curentRoute=='userManage' || curentRoute=='themeManage'|| curentRoute=='orderManage'|| curentRoute=='invoiceManage'|| curentRoute=='cardManage'|| curentRoute=='orderManageMent'){
-      this.states.openKey = 'sub2'
-    }else{
-      this.states.openKey = 'sub3'      
-    }
-  }
-  menuhandleClick=(e)=>{
-    this.states.current =  e.key;
   }
   render() {
     return (
@@ -45,37 +31,37 @@ class Home extends React.Component {
         </div>
         <div className="content">
           <div className="nav">
-            <Menu mode="inline" className="nav__menu" onClick={this.menuhandleClick}  selectedKeys={[this.states.current]} defaultOpenKeys={[this.states.openKey]}>
-              <SubMenu title="平台信息" key="sub1">
-                <Menu.Item key="useNotice">
+            <Menu mode="inline" className="nav__menu">
+              <SubMenu title="平台信息">
+                <Menu.Item key="1">
                   <Link to="/useNotice">使用须知</Link>
                 </Menu.Item>
-                <Menu.Item key="privacy">
+                <Menu.Item key="2">
                   <Link to="/privacy">隐私权条款</Link>
                 </Menu.Item>
-                <Menu.Item key="invoice">
+                <Menu.Item key="3">
                   <Link to="/invoice">发票规定</Link>
                 </Menu.Item>
               </SubMenu>
-              <SubMenu title="管理" key="sub2">
-                <Menu.Item key="userManage">
+              <SubMenu title="管理">
+                <Menu.Item key="4">
                   <Link to="/userManage">用户管理</Link>
                 </Menu.Item>
-                <Menu.Item key="themeManage">
+                <Menu.Item key="5">
                   <Link to="/themeManage">主题管理</Link>
                 </Menu.Item>
                 <Menu.Item key="6">商品管理</Menu.Item>
-                <Menu.Item key="orderManage">
+                <Menu.Item key="7">
                     <Link to="/orderManage">订单管理</Link>                
                 </Menu.Item>
-                <Menu.Item key="invoiceManage">发票管理
+                <Menu.Item key="8">发票管理
                     <Link to="/invoiceManage">发票管理</Link>                
                 </Menu.Item>
-                <Menu.Item key="cardManage">
+                <Menu.Item key="9">
                     <Link to="/cardManage">卡券管理</Link>                
                 </Menu.Item>
               </SubMenu>
-              <SubMenu title="设置" key="sub3">
+              <SubMenu title="设置">
                 <Menu.Item key="10">账户权限</Menu.Item>
               </SubMenu>
             </Menu>

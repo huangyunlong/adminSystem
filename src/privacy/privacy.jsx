@@ -1,35 +1,31 @@
 import React from "react";
 import { observable } from "mobx";
 import { observer } from "mobx-react";
-import { Button } from "antd";
-import createEditor from "../baseConfig/editorConfig";
+import { Button, message } from "antd";
+import MyRichText from "../components/myRichText/myRichText.jsx";
 
 import "./privacy.css";
 
 @observer
 class Privacy extends React.Component {
-  constructor(props) {
-    super(props);
-  }
-
-  componentDidMount() {
-    this.createWangEditor();
-  }
-
-  createWangEditor() {
-    this.editor = createEditor.initEditor(this.refs.editor);
-  }
-
-  saveEditorContent() {
-    console.log(this.editor.txt.text());
-  }
+  content = "";
 
   render() {
     return (
       <div className="privacy">
         <h2>隐私权条款</h2>
-        <div className="editor" ref="editor" />
-        <Button type="primary" onClick={this.saveEditorContent.bind(this)}>
+        <MyRichText
+          value={this.content}
+          onChange={(html,text) => {
+            this.content = html;
+          }}
+        />
+        <Button
+          type="primary"
+          onClick={() => {
+            message.success("保存成功");
+          }}
+        >
           保存
         </Button>
       </div>

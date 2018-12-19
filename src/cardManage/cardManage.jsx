@@ -114,7 +114,7 @@ class CardManage extends React.Component {
         </div>
         <div className="cardManage_tables">
           <div className="cardManageTop">
-            <span className="cardList">卡券信息</span>
+            <span className="cardList">卡券列表</span>
           </div>
           <div className="cardManage_tableContent">
             <Table

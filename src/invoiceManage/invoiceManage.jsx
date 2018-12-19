@@ -145,7 +145,7 @@ class InvoiceManage extends React.Component {
         </div>
         <div className="invoiceManage_tables">
           <div className="invoiceManageTop">
-            <span className="invoiceList">发票信息</span>
+            <span className="invoiceList">发票列表</span>
           </div>
           <div className="invoiceManage_tableContent">
             <Table

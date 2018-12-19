@@ -7,8 +7,7 @@ import ThemeManage from '../themeManage/themeManage.jsx';
 import orderManage from '../orderManage/orderManage.jsx';
 import invoiceManage from '../invoiceManage/invoiceManage.jsx';
 import cardManage from '../cardManage/cardManage.jsx';
-
-
+import login from '../login/login.jsx';
 export default [{
     component: Home,
     childs: [{
@@ -36,4 +35,7 @@ export default [{
         path:'/cardManage', // 卡券管理
         component: cardManage
     }]
+},{
+    path:'/login',
+    component: login
 }];

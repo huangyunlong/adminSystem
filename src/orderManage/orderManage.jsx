@@ -116,7 +116,7 @@ class OrderManage extends React.Component {
       <div className="orderManage" ref="orderManage">
         <div className="orderManage_title">
           <div className="titles">订单管理</div>
-          <div className="information">订单列表</div>
+          <div className="information">订单信息</div>
         </div>
         <div className="orderManage_search">
           <div className="searchConditions">搜索条件</div>
@@ -145,7 +145,7 @@ class OrderManage extends React.Component {
         </div>
         <div className="orderManage_tables">
           <div className="orderManageTop">
-            <span className="orderList">订单信息</span>
+            <span className="orderList">订单列表</span>
           </div>
           <div className="orderManage_tableContent">
             <Table
