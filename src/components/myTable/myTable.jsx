@@ -4,8 +4,10 @@ import { observable, action, computed } from "mobx";
 import MyRichText from "../myRichText/myRichText.jsx";
 import {
   Select,
+  DatePicker,
   message,
   Upload,
+  Icon,
   Table,
   Input,
   Button,
@@ -17,17 +19,18 @@ import Mock from "mockjs";
 import tool from "@/tools/tool.js";
 
 const FormItem = Form.Item;
+const { MonthPicker, RangePicker, WeekPicker } = DatePicker;
 let tableName = "",
+  updateTableUrl = "", // 更新表格的地址
   FormProps = {}; // 用来存储form表单里编辑过的所有对象的值
 
 /**
  * 更新表格信息
  */
 async function updateRowWithServer(type, datas) {
-  let url = "",
-    rel = {};
+  let rel = {};
   try {
-    rel = await tool.requestAjaxSync(url, "post", {
+    rel = await tool.requestAjaxSync(updateTableUrl, "post", {
       type,
       tableName,
       ...datas
@@ -284,6 +287,7 @@ MyModal = Form.create({
   }
 })(MyModal);
 
+@inject("myGlobal")
 @observer
 class MyTable extends React.Component {
   @observable tableHeight = 0; // 表格高度
@@ -302,7 +306,6 @@ class MyTable extends React.Component {
     pageSizeOptions: ["10", "20", "50", "100"]
   };
   @observable loading = false;
-  @observable searchContent = ""; // 全局搜索字段
   lastTableRequestParam = {}; // 上一次请求表格数据时的参数
   nowSelectedRows = [];
 
@@ -316,10 +319,19 @@ class MyTable extends React.Component {
     this.initTable();
   }
 
-  componentWillMount() {}
+  componentWillMount() {
+    updateTableUrl = this.props.myGlobal.tableUrl;
+  }
 
   componentDidMount() {
-    this.tableHeight = this.refs.myTable.offsetHeight - 54 - 100;
+    setTimeout(() => {
+      if (this.props.mode == "edit") {
+        this.tableHeight = this.refs.myTable.offsetHeight - 40 - 100;
+      } else {
+        this.tableHeight = this.refs.myTable.offsetHeight - 100;
+      }
+    }, 0);
+    // alert(this.refs.myTable.offsetHeight);
     // alert(this.refs.myTable.offsetHeight + "-" + this.tableHeight);
   }
 
@@ -391,7 +403,17 @@ class MyTable extends React.Component {
    */
   defineColumns() {
     this.columns = this.props.columns;
+
+    this.columns.forEach(item => {
+      if (item.filterType == "string") {
+        _.merge(item, { ...this.getStringColumnSearchProps(item.title) });
+      } else if (item.filterType == "date") {
+        _.merge(item, { ...this.getDateColumnSearchProps(item.title) });
+      }
+    });
+
     this.columns.unshift({
+      key: Math.random(),
       title: "序号",
       render: (text, row, index) => {
         return <span>{index + 1}</span>;
@@ -399,28 +421,32 @@ class MyTable extends React.Component {
       width: 100,
       align: "center"
     });
-    this.columns.push({
-      title: "操作",
-      width: 150,
-      render: (text, record, index) => {
-        return (
-          <div>
-            <span
-              style={{ color: "#1890ff", cursor: "pointer", marginRight: 10 }}
-              onClick={this.handleRowEdit.bind(this, index)}
-            >
-              编辑
-            </span>
-            <span
-              style={{ color: "#1890ff", cursor: "pointer" }}
-              onClick={this.handleRowDelete.bind(this, index)}
-            >
-              删除
-            </span>
-          </div>
-        );
-      }
-    });
+    if (this.props.mode == "edit") {
+      this.columns.push({
+        key: Math.random(),
+        title: "操作",
+        width: 150,
+        align: "center",
+        render: (text, record, index) => {
+          return (
+            <div>
+              <span
+                style={{ color: "#1890ff", cursor: "pointer", marginRight: 10 }}
+                onClick={this.handleRowEdit.bind(this, index)}
+              >
+                编辑
+              </span>
+              <span
+                style={{ color: "#1890ff", cursor: "pointer" }}
+                onClick={this.handleRowDelete.bind(this, index)}
+              >
+                删除
+              </span>
+            </div>
+          );
+        }
+      });
+    }
   }
 
   /**
@@ -430,7 +456,6 @@ class MyTable extends React.Component {
       page, // 当前页码
       sortField, // 当前排序字段
       sortOrder, // 当前排序方式
-      searchContent // 全局搜索字符
     }
    */
   async fetchDataSource(params = {}) {
@@ -472,51 +497,119 @@ class MyTable extends React.Component {
     this.editWindowVisible = true;
   }
 
-  handleTableChange(pagination, filters, sorter) {
-    const pager = this.pagination;
-    pager.current = pagination.current;
+  async handleTableChange(pagination, filters, sorter) {
+    console.log(filters);
+    this.pagination = _.merge(this.pagination, pagination);
 
-    this.fetchDataSource({
+    await this.fetchDataSource({
       pageSize: pagination.pageSize,
       page: pagination.current,
       sortField: sorter.field,
       sortOrder: sorter.order,
-      searchContent: this.searchContent
+      filters
     });
   }
+
+  getDateColumnSearchProps = searchTitle => ({
+    filterDropdown: ({
+      setSelectedKeys,
+      selectedKeys,
+      confirm,
+      clearFilters
+    }) => (
+      <div className="custom-filter-dropdown-date">
+        <RangePicker
+          onChange={(date, dateString) => {
+            setSelectedKeys(dateString ? [dateString] : []);
+            confirm();
+          }}
+          style={{ width: 250, marginBottom: 8, display: "block" }}
+        />
+      </div>
+    ),
+    filterIcon: filtered => (
+      <Icon type="search" style={{ color: filtered ? "#1890ff" : undefined }} />
+    )
+  });
+
+  getStringColumnSearchProps = searchTitle => ({
+    filterDropdown: ({
+      setSelectedKeys,
+      selectedKeys,
+      confirm,
+      clearFilters
+    }) => (
+      <div className="custom-filter-dropdown-string">
+        <Input
+          ref={node => {
+            this.searchInput = node;
+          }}
+          placeholder={`搜索 【${searchTitle}】`}
+          value={selectedKeys[0]}
+          onChange={e =>
+            setSelectedKeys(e.target.value ? [e.target.value] : [])
+          }
+          onPressEnter={() => confirm()}
+          style={{ width: 188, marginBottom: 8, display: "block" }}
+        />
+        <Button
+          type="primary"
+          onClick={() => confirm()}
+          icon="search"
+          size="small"
+          style={{ width: 90, marginRight: 8 }}
+        >
+          搜索
+        </Button>
+        <Button
+          onClick={() => clearFilters()}
+          size="small"
+          style={{ width: 90 }}
+        >
+          重置
+        </Button>
+      </div>
+    ),
+    filterIcon: filtered => (
+      <Icon type="search" style={{ color: filtered ? "#1890ff" : undefined }} />
+    ),
+    onFilterDropdownVisibleChange: visible => {
+      if (visible) {
+        setTimeout(() => this.searchInput.select());
+      }
+    }
+  });
 
   render() {
     return (
       <div className="myTable" ref="myTable">
         <div className="tool">
-          <Input.Search
-            placeholder="全局搜索"
-            onSearch={value => {
-              this.searchContent = value;
-              this.fetchDataSource(
-                _.merge(this.lastTableRequestParam, {
-                  searchContent: value
-                })
-              );
-            }}
-            style={{ width: 200, marginRight: 5, position: "relative", top: 1 }}
-          />
-          <Button type="primary" onClick={this.addRow.bind(this)}>
-            增加
-          </Button>
-          <Button type="danger" onClick={this.handleRowsDelete.bind(this)}>
-            删除
-          </Button>
+          {this.props.mode == "edit" ? (
+            <React.Fragment>
+              <Button type="primary" onClick={this.addRow.bind(this)}>
+                增加
+              </Button>
+              <Button type="danger" onClick={this.handleRowsDelete.bind(this)}>
+                删除
+              </Button>
+            </React.Fragment>
+          ) : (
+            ""
+          )}
         </div>
         <Table
           bordered
           className="table"
           scroll={{ y: this.tableHeight }}
-          rowSelection={{
-            onChange: (selectedRowKeys, selectedRows) => {
-              this.nowSelectedRows = selectedRows;
-            }
-          }}
+          rowSelection={
+            this.props.mode == "edit"
+              ? {
+                  onChange: (selectedRowKeys, selectedRows) => {
+                    this.nowSelectedRows = selectedRows;
+                  }
+                }
+              : null
+          }
           loading={this.loading}
           dataSource={this.dataSource}
           columns={this.columns}

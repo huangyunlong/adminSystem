@@ -2,103 +2,13 @@
     height: 100%;
     box-sizing: border-box;
 
-    .invoiceManage_title {
-        height: 68px;
-        margin-bottom: 10px;
-        border: 1px solid #eee;
-
-        .titles {
-            margin: 10px 20px 6px 20px;
-            border-bottom: 2px solid #eee;
-        }
-
-        .information {
-            font-weight: bold;
-            margin-left: 40px;
-        }
+    h2 {
+        margin: 10px;
+        margin-left: 0;
+        height: 31px;
     }
 
-    .invoiceManage_search {
-        height: 100px;
-        margin-bottom: 10px;
-        border: 1px solid #eee;
-
-        .searchConditions {
-            height: 40px;
-            line-height: 40px;
-            background: #eee;
-            text-indent: 20px;
-            color: black;
-        }
-
-        .searchConditionsInput {
-            display: flex;
-            flex-direction: row;
-            justify-content: space-between;
-            align-items: center;
-            height: 60px;
-
-            .search_input {
-                flex: 9;
-                display: inline-block;
-
-                .ant-calendar-picker {
-                    margin-right: 20px;
-                }
-
-                input {
-                    width: 16%;
-                    margin-left: 20px;
-
-                    &.ant-calendar-picker-input.ant-input {
-                        width: 100%;
-                    }
-                }
-            }
-
-            .btn {
-                flex: 1;
-                text-align: right;
-                margin-right: 20px;
-            }
-        }
-    }
-
-    .invoiceManage_tables {
-        .invoiceManageTop {
-            height: 40px;
-            line-height: 40px;
-            background: #eee;
-
-            .invoiceList {
-                float: left;
-                margin-left: 20px;
-                color: black;
-            }
-
-            .export {
-                float: right;
-                margin-right: 20px;
-                color: #40a9ff;
-                cursor: pointer;
-            }
-        }
-
-        .invoiceManage_tableContent {
-            box-sizing: border-box;
-
-            table {
-                height: calc(100% - 50px);
-
-                .smallImag {
-                    height: 60px;
-                    border-radius: 50%;
-                    -webkit-border-radius: 50%;
-                    -moz-border-radius: 50%;
-                    -ms-border-radius: 50%;
-                    -o-border-radius: 50%;
-                }
-            }
-        }
+    .tablePanel {
+        height: calc(100% - 50px);
     }
 }

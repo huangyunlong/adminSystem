@@ -2,7 +2,7 @@ import React from "react";
 import { observer, inject } from "mobx-react";
 import { observable, action, computed } from "mobx";
 import "./themeManage.css";
-import MyTable from "@/components/myTable/myTable.jsx";
+import MyTable from "../components/myTable/myTable.jsx";
 
 @observer
 class ThemeManage extends React.Component {
@@ -15,6 +15,7 @@ class ThemeManage extends React.Component {
         title: "主题名称",
         dataIndex: "themeName", // dataIndex 和 key 需要一致
         key: "themeName",
+        filterType: "string", // 表示过滤字符串,string,date
         width: 150,
         sorter: true, // 是否可排序
         align: "center", // 列文字排版
@@ -127,7 +128,7 @@ class ThemeManage extends React.Component {
       <div className="themeManage" ref="themeManage">
         <h2>主题管理</h2>
         <div className="tablePanel">
-          <MyTable columns={this.columns} tableName='theme'/>
+          <MyTable columns={this.columns} tableName="theme" mode="edit" />
         </div>
       </div>
     );
