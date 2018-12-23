@@ -43,7 +43,8 @@ class userManage extends React.Component {
         dataIndex: "userName",
         key: "userName",        
         width: 100,
-        align: "center"
+        align: "center",
+        filterType: "string" // 表示过滤字符串,string,date
       },
       {
         title: "性别",

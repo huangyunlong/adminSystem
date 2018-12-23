@@ -13,7 +13,8 @@ class CardManage extends React.Component {
         title: "订单编号",
         dataIndex: "orderNumber",
         width: 200,
-        align: "center"
+        align: "center",
+        filterType: "string"
       },
         {
         title: "卡券编号",

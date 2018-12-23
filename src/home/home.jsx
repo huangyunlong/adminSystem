@@ -32,13 +32,13 @@ class Home extends React.Component {
     } else if (
       curentRoute == "userManage" ||
       curentRoute == "themeManage" ||
-      curentRoute == "orderManageMent" ||
       curentRoute == "invoiceManage" ||
       curentRoute == "cardManage" ||
-      curentRoute == "orderManageMent"
+      curentRoute == "orderManage"||
+      curentRoute == "goodsManage"
     ) {
       this.states.openKey = "sub2";
-    } else if(curentRoute == "userPermission") {
+    } else if(curentRoute == "accountManage") {
       this.states.openKey = "sub3";
     }
   }
@@ -76,7 +76,9 @@ class Home extends React.Component {
               <Menu.Item key="themeManage">
                 <Link to="/themeManage">主题管理</Link>
               </Menu.Item>
-              <Menu.Item key="6">商品管理</Menu.Item>
+              <Menu.Item key="goodsManage">
+                <Link to="/goodsManage">商品管理</Link>
+              </Menu.Item>
               <Menu.Item key="orderManage">
                 <Link to="/orderManage">订单管理</Link>
               </Menu.Item>
@@ -89,7 +91,9 @@ class Home extends React.Component {
               </Menu.Item>
             </SubMenu>
             <SubMenu title="设置" key="sub3">
-              <Menu.Item key="userPermission">账户权限</Menu.Item>
+              <Menu.Item key="userPermission">
+                <Link to="/accountManage">账户权限</Link>
+              </Menu.Item>
             </SubMenu>
           </Menu>
         </Sider>

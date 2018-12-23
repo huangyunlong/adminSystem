@@ -64,9 +64,9 @@ function beforeUpload(file) {
   if (!isJPG) {
     message.error("You can only upload JPG file!");
   }
-  const isLt2M = file.size / 1024 / 1024 < 2;
+  const isLt2M = file.size / 1024 / 1024 < 5;
   if (!isLt2M) {
-    message.error("Image must smaller than 2MB!");
+    message.error("Image must smaller than 5MB!");
   }
   return isJPG && isLt2M;
 }
@@ -110,7 +110,8 @@ class MyModal extends React.Component {
       if (error) {
         return;
       }
-      let newRow = _.merge({}, this.row, FormProps),
+      console.log(values);
+      let newRow = _.assign({}, this.row, values),
         rel = null;
       // 如果是增加模式
       if (this.addRowMode) {
@@ -155,9 +156,11 @@ class MyModal extends React.Component {
       return;
     } else if (info.file.status === "done" || info.file.status === "error") {
       // Get this url from response in real world.
-      getBase64(info.file.originFileObj, imageBase64Url => {
-        this.row[column.key] = imageBase64Url;
-      });
+      // let url = _.get(info, 'file.response["image-url"]');
+      // info.fileList[info.fileList.length - 1].thumbUrl = url;
+      // getBase64(info.file.originFileObj, imageBase64Url => {
+      //   // this.row[column.key][index] = imageBase64Url;
+      // });
     }
   };
 
@@ -168,6 +171,8 @@ class MyModal extends React.Component {
         wrapperCol: { span: 20 }
       },
       columns = this.props.columns;
+
+    if (rowIndex == -1) return <div />;
     return (
       <Modal
         destroyOnClose
@@ -184,7 +189,11 @@ class MyModal extends React.Component {
             if (column.editWindow == null) return;
             if (column.editWindow.type == "input") {
               return (
-                <FormItem key={column.key} label="主题名称" {...formItemLayout}>
+                <FormItem
+                  key={column.key}
+                  label={column.title}
+                  {...formItemLayout}
+                >
                   {this.props.form.getFieldDecorator(column.key, {
                     rules: [
                       {
@@ -201,30 +210,65 @@ class MyModal extends React.Component {
                   )}
                 </FormItem>
               );
-            } else if (column.editWindow.type == "img") {
+            } else if (column.editWindow.type == "imgs") {
               return (
                 <FormItem
                   key={column.key}
                   label={column.title}
                   {...formItemLayout}
                 >
-                  <Upload
-                    listType="picture-card"
-                    className="avatar-uploader"
-                    showUploadList={false}
-                    beforeUpload={beforeUpload}
-                    onChange={this.handleFileUploadStatusChange.bind(
-                      this,
-                      column
-                    )}
-                    {...column.editWindow.moreSet}
-                  >
-                    <img
-                      style={{ width: "100px", height: "100px" }}
-                      src={this.row[column.key]}
-                      alt=""
-                    />
-                  </Upload>
+                  {this.props.form.getFieldDecorator(column.key, {
+                    rules: [
+                      {
+                        required: true,
+                        message: "必须上传至少一张图片"
+                      }
+                    ],
+                    getValueFromEvent(...args) {
+                      // 重新定义返回的值的类型
+                      let list = args[0].fileList;
+                      list = list.map(item => {
+                        let url = _.get(item, 'response["image-url"]');
+                        return {
+                          url: url || item.thumbUrl,
+                          uid: item.uid
+                        };
+                      });
+                      return list;
+                    },
+                    initialValue: this.row[column.key]
+                  })(
+                    <Upload
+                      listType="picture-card"
+                      className="avatar-uploader"
+                      showUploadList={true}
+                      beforeUpload={beforeUpload}
+                      multiple
+                      // customRequest={(option)=>{
+                      //   alert('yes');
+                      //   console.log(option);
+                      // }}
+                      action="https://sp.tkfun.site/upload"
+                      defaultFileList={this.row[column.key]}
+                      onPreview={file => {
+                        var html = `<html><body>
+          <img width="100%" src="${file.thumbUrl}" />
+        </body></html>`;
+                        let a = window.open();
+                        a.document.write(html);
+                      }}
+                      onChange={this.handleFileUploadStatusChange.bind(
+                        this,
+                        column
+                      )}
+                      {...column.editWindow.moreSet}
+                    >
+                      <div>
+                        <Icon type="plus" />
+                        <div className="ant-upload-text">上传</div>
+                      </div>
+                    </Upload>
+                  )}
                 </FormItem>
               );
             } else if (column.editWindow.type == "select") {
@@ -270,6 +314,20 @@ class MyModal extends React.Component {
                   />
                 </FormItem>
               );
+            } else {
+              return (
+                <FormItem
+                  key={column.key}
+                  label={column.title}
+                  {...formItemLayout}
+                >
+                  {column.editWindow.customRender(
+                    this.props.form,
+                    this.row,
+                    column
+                  )}
+                </FormItem>
+              );
             }
           })}
         </Form>
@@ -281,9 +339,13 @@ class MyModal extends React.Component {
 // 用来创建表单验证的必要逻辑
 MyModal = Form.create({
   onFieldsChange(props, changedFields) {
-    for (let key in changedFields) {
-      FormProps[key] = changedFields[key].value;
-    }
+    // for (let key in changedFields) {
+    //   if (_.get(changedFields, `[${key}].value.file`) != null) {
+    //     FormProps[key] = changedFields[key].value.fileList;
+    //   } else {
+    //     FormProps[key] = changedFields[key].value;
+    //   }
+    // }
   }
 })(MyModal);
 
@@ -291,6 +353,7 @@ MyModal = Form.create({
 @observer
 class MyTable extends React.Component {
   @observable tableHeight = 0; // 表格高度
+  @observable tableWidth = 0;
   @observable editingRowIndex = -1; // 正在编辑的行在datasource中的下标
   @observable editWindowVisible = false; // 是否打开编辑行窗口
   @observable dataSource = []; // 表体
@@ -330,6 +393,7 @@ class MyTable extends React.Component {
       } else {
         this.tableHeight = this.refs.myTable.offsetHeight - 100;
       }
+      this.tableWidth = this.props.tableWidth;
     }, 0);
     // alert(this.refs.myTable.offsetHeight);
     // alert(this.refs.myTable.offsetHeight + "-" + this.tableHeight);
@@ -475,8 +539,15 @@ class MyTable extends React.Component {
           "key|+1": 0,
           id: "@integer()",
           themeName: "@ctitle()",
-          img:
-            "https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1544962465147&di=91a2f0c83ce1ee20733ca0b659a32152&imgtype=0&src=http%3A%2F%2Fpic17.nipic.com%2F20111023%2F8104044_230939695000_2.jpg",
+          "imgs|2-2": [
+            {
+              uid: "@integer(1,1000)",
+              "url|1": [
+                "https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1544962465147&di=91a2f0c83ce1ee20733ca0b659a32152&imgtype=0&src=http%3A%2F%2Fpic17.nipic.com%2F20111023%2F8104044_230939695000_2.jpg",
+                "http://pic28.photophoto.cn/20130818/0020033143720852_b.jpg"
+              ]
+            }
+          ],
           "state|1": ["lowerShelf", "inDisplay"],
           "topping|1": ["0", "1"]
         }
@@ -600,7 +671,7 @@ class MyTable extends React.Component {
         <Table
           bordered
           className="table"
-          scroll={{ y: this.tableHeight }}
+          scroll={{ x: this.tableWidth, y: this.tableHeight }}
           rowSelection={
             this.props.mode == "edit"
               ? {
@@ -626,6 +697,8 @@ class MyTable extends React.Component {
           }}
           updateRow={(newRow, index) => {
             this.dataSource[index] = newRow;
+            this.dataSource = this.dataSource.slice();
+            console.log(this.dataSource);
           }}
           addRow={newRow => {
             this.dataSource.unshift(newRow);

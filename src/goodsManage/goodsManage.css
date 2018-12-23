@@ -1,0 +1,15 @@
+
+.goodsManage {
+    height: 100%;
+    box-sizing: border-box;
+
+    h2 {
+        margin: 10px;
+        margin-left: 0;
+        height: 31px;
+    }
+
+    .tablePanel {
+        height: calc(100% - 50px);
+    }
+}
