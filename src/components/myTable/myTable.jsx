@@ -146,24 +146,6 @@ class MyModal extends React.Component {
     this.props.cancelWindow();
   }
 
-  /**
-   * 上传状态改变时的处理函数
-   *
-   * @memberof MyModal
-   */
-  handleFileUploadStatusChange = (column, info) => {
-    if (info.file.status === "uploading") {
-      return;
-    } else if (info.file.status === "done" || info.file.status === "error") {
-      // Get this url from response in real world.
-      // let url = _.get(info, 'file.response["image-url"]');
-      // info.fileList[info.fileList.length - 1].thumbUrl = url;
-      // getBase64(info.file.originFileObj, imageBase64Url => {
-      //   // this.row[column.key][index] = imageBase64Url;
-      // });
-    }
-  };
-
   render() {
     let rowIndex = this.props.editingRowIndex,
       formItemLayout = {
@@ -172,7 +154,7 @@ class MyModal extends React.Component {
       },
       columns = this.props.columns;
 
-    if (rowIndex == -1) return <div />;
+    if (rowIndex == -1 && !this.addRowMode) return <div />;
     return (
       <Modal
         destroyOnClose
@@ -241,7 +223,7 @@ class MyModal extends React.Component {
                     <Upload
                       listType="picture-card"
                       className="avatar-uploader"
-                      showUploadList={true}
+                      showUploadList={column.editWindow.imgCount > 1}
                       beforeUpload={beforeUpload}
                       multiple
                       // customRequest={(option)=>{
@@ -257,16 +239,43 @@ class MyModal extends React.Component {
                         let a = window.open();
                         a.document.write(html);
                       }}
-                      onChange={this.handleFileUploadStatusChange.bind(
-                        this,
-                        column
-                      )}
+                      onChange={info => {
+                        if (info.file.status === "uploading") {
+                          return;
+                        } else if (
+                          info.file.status === "done" ||
+                          info.file.status === "error"
+                        ) {
+                        }
+                      }}
                       {...column.editWindow.moreSet}
                     >
-                      <div>
-                        <Icon type="plus" />
-                        <div className="ant-upload-text">上传</div>
-                      </div>
+                      {column.editWindow.imgCount <= 1 ? (
+                        <React.Fragment>
+                          {((this.imgUrl = this.props.form.getFieldValue(
+                            column.key
+                          )),
+                          this.imgUrl.length) > 1 ? (
+                            <div>
+                              <img
+                                src={_.get(this, "imgUrl[0].url")}
+                                style={{ width: "100%" }}
+                                alt="avatar"
+                              />
+                            </div>
+                          ) : (
+                            <div>
+                              <Icon type="plus" />
+                              <div className="ant-upload-text">上传</div>
+                            </div>
+                          )}
+                        </React.Fragment>
+                      ) : (
+                        <div>
+                          <Icon type="plus" />
+                          <div className="ant-upload-text">上传</div>
+                        </div>
+                      )}
                     </Upload>
                   )}
                 </FormItem>

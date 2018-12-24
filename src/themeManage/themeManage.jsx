@@ -69,7 +69,9 @@ class ThemeManage extends React.Component {
           );
         },
         editWindow: {
-          type: "imgs"
+          type: "imgs",
+          imgCount: 1,
+          moreSet: {}
         }
       },
       {
@@ -151,7 +153,12 @@ class ThemeManage extends React.Component {
       <div className="themeManage" ref="themeManage">
         <h2>主题管理</h2>
         <div className="tablePanel">
-          <MyTable columns={this.columns} tableName="theme" mode="edit" tableWidth="100%"/>
+          <MyTable
+            columns={this.columns}
+            tableName="theme"
+            mode="edit"
+            tableWidth="100%"
+          />
         </div>
       </div>
     );
