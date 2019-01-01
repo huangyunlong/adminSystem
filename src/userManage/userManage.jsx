@@ -33,8 +33,8 @@ class userManage extends React.Component {
       },
       {
         title: "昵称",
-        dataIndex: "nickName",
-        key: "nickName",
+        dataIndex: "nick_name",
+        key: "nick_name",
         width: 100,
         align: "center"
       },
@@ -78,7 +78,7 @@ class userManage extends React.Component {
       <div className="userManage" ref="userManage">
         <h2>用户管理</h2>
         <div className="tablePanel">
-          <MyTable columns={this.columns} tableName="userManage" mode="null" />
+          <MyTable columns={this.columns} tableName="member" mode="null" />
         </div>
       </div>
     );

@@ -11,4 +11,42 @@
   .tablePanel {
     height: calc(100% - 50px);
   }
+
+  .themeManageTable {
+    height: 100%;
+    box-sizing: border-box;
+
+    .tool {
+      text-align: right;
+      button {
+        margin-right: 5px;
+      }
+      margin-bottom: 10px;
+    }
+
+    .table {
+      height: 120%;
+      overflow: hidden;
+
+      .smallImg {
+        width: 200px;
+      }
+
+      .disable {
+        opacity: 0.5;
+      }
+
+      .custom-filter-dropdown-string {
+        padding: 8px;
+        border-radius: 4px;
+        background: #fff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      }
+      .custom-filter-dropdown-date {
+        border-radius: 4px;
+        background: #fff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      }
+    }
+  }
 }

@@ -1,14 +1,62 @@
 .orderManage {
     height: 100%;
     box-sizing: border-box;
+    .orderManage_search {
+        height: 50px;
+        margin-bottom: 10px;
+        .searchConditionsInput {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            height: 60px;
 
-    h2 {
-        margin: 10px;
-        margin-left: 0;
-        height: 31px;
+            .search_input {
+                flex: 9;
+                display: inline-block;
+
+                .ant-calendar-picker {
+                    margin-right: 20px;
+                }
+                input {
+                    width: 16%;
+                    margin-right: 20px;
+                    &.ant-calendar-picker-input.ant-input {
+                        width: 100%;
+                    }
+                }
+            }
+
+            .btn {
+                flex: 1;
+                text-align: right;
+            }
+        }
     }
 
-    .tablePanel {
-        height: calc(100% - 50px);
+    .orderManage_tables {
+        .orderManageTop {
+            height: 40px;
+            line-height: 40px;
+            background: #eee;
+            .orderList {
+                float: left;
+                color: black;
+            }
+        }
+        .orderManage_tableContent {
+            box-sizing: border-box;
+            table {
+                height: calc(100% - 50px);
+                .smallImag {
+                    height: 60px;
+                    border-radius: 50%;
+                    -webkit-border-radius: 50%;
+                    -moz-border-radius: 50%;
+                    -ms-border-radius: 50%;
+                    -o-border-radius: 50%;
+                }
+            }
+        }
     }
 }
