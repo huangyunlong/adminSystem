@@ -1,39 +1,6 @@
 .orderManage {
     height: 100%;
     box-sizing: border-box;
-    .orderManage_search {
-        height: 50px;
-        margin-bottom: 10px;
-        .searchConditionsInput {
-            display: flex;
-            flex-direction: row;
-            justify-content: space-between;
-            align-items: center;
-            height: 60px;
-
-            .search_input {
-                flex: 9;
-                display: inline-block;
-
-                .ant-calendar-picker {
-                    margin-right: 20px;
-                }
-                input {
-                    width: 16%;
-                    margin-right: 20px;
-                    &.ant-calendar-picker-input.ant-input {
-                        width: 100%;
-                    }
-                }
-            }
-
-            .btn {
-                flex: 1;
-                text-align: right;
-            }
-        }
-    }
-
     .orderManage_tables {
         .orderManageTop {
             height: 40px;
