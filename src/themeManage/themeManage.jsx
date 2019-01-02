@@ -22,6 +22,7 @@ const { RangePicker } = DatePicker;
 const FormItem = Form.Item;
 
 let publicUrl = "https://sp.tkfun.site/mock/14";
+publicUrl = "http://93.179.103.52:5000";
 let addUrl = publicUrl + "/theme/addData"; // 新增数据接口地址
 let updateUrl = publicUrl + "/theme/updateData";
 let deleteUrl = publicUrl + "/theme/deleteData";
@@ -73,8 +74,8 @@ class MyModal extends React.Component {
     if (this.addRowMode) {
       this.row = {};
     } else {
-      this.row = relativeRow;
-      this.imgList = this.row.img_url_list.map(item => {
+      this.row = _.clone(relativeRow);
+      this.row.img_url_list = this.row.img_url_list.map(item => {
         return {
           uid: Mock.Random.integer(),
           url: item
@@ -93,8 +94,8 @@ class MyModal extends React.Component {
       }
       let newRow = _.assign({}, this.row, values),
         rel = null;
-      newRow.img_url_list = this.imgList.map(item => {
-        return item.url;
+      newRow.img_url_list = newRow.img_url_list.map(item => {
+        return item.url || _.get(item, "response.data[0]");
       });
       // 如果是增加模式
       if (this.addRowMode) {
@@ -134,15 +135,15 @@ class MyModal extends React.Component {
     this.props.cancelWindow();
   }
 
-  handleChange = ({ file, fileList }) => {
-    this.imgList = fileList.map(item => {
-      return {
-        uid: item.uid,
-        url: item.url || _.get(item, "response.data[0]"),
-        thumbUrl: _.get(item, "response.data[0]") || item.url
-      };
-    });
-  };
+  // handleChange = ({ file, fileList }) => {
+  //   this.imgList = fileList.map(item => {
+  //     return {
+  //       uid: item.uid,
+  //       url: item.url || _.get(item, "response.data[0]"),
+  //       thumbUrl: _.get(item, "response.data[0]") || item.url
+  //     };
+  //   });
+  // };
 
   render() {
     let formItemLayout = {
@@ -174,20 +175,35 @@ class MyModal extends React.Component {
             })(<Input placeholder="不能为空" />)}
           </FormItem>
           <FormItem label="缩略图" {...formItemLayout}>
-            <Upload
-              listType="picture-card"
-              className="avatar-uploader"
-              beforeUpload={beforeUpload}
-              multiple
-              fileList={this.imgList}
-              action={uploadImgUrl}
-              onChange={this.handleChange}
-            >
-              <div>
-                <Icon type="plus" />
-                <div className="ant-upload-text">上传</div>
-              </div>
-            </Upload>
+            {form.getFieldDecorator("img_url_list", {
+              rules: [
+                {
+                  required: true,
+                  message: "不能为空"
+                }
+              ],
+              valuePropName: "fileList",
+              initialValue: this.row.img_url_list,
+              getValueFromEvent: e => {
+                if (Array.isArray(e)) {
+                  return e;
+                }
+                return e && e.fileList;
+              }
+            })(
+              <Upload
+                listType="picture-card"
+                className="avatar-uploader"
+                beforeUpload={beforeUpload}
+                multiple
+                action={uploadImgUrl}
+              >
+                <div>
+                  <Icon type="plus" />
+                  <div className="ant-upload-text">上传</div>
+                </div>
+              </Upload>
+            )}
           </FormItem>
           <FormItem label="状态" {...formItemLayout}>
             {form.getFieldDecorator("status", {
@@ -283,7 +299,7 @@ class MyTable extends React.Component {
   async handleRowDelete(index) {
     let row = this.dataSource[index];
     let rel = await tool.requestAjaxSync(deleteUrl, "post", {
-      deleteIds: [row.id]
+      ids: [row.id]
     });
     rel = rel.data;
     if (rel.state == 1) {
@@ -307,7 +323,7 @@ class MyTable extends React.Component {
       return;
     }
     let rel = await tool.requestAjaxSync(deleteUrl, "post", {
-      deleteIds: ids
+      ids: ids
     });
     rel = rel.data;
     if (rel.state == 1) {
