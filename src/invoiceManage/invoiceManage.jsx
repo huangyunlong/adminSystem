@@ -94,7 +94,7 @@ class InvoiceManage extends React.Component {
         key: "userName",
         width: 150,
         align: "center",
-        filterType: "string" // 表示过滤字符串,string,date
+        filterType: "string" // 表示过滤字符串,string,date                
       },
       {
         title: "邮箱",
@@ -265,15 +265,15 @@ class InvoiceManage extends React.Component {
 export default InvoiceManage;
 
 // columns: [
-// {
-//   title: "编号",
-//   dataIndex: "number",
-//   width: 200,
-//   align: "center",
-//   render: (text, row, index) => {
-//       return <span>{index+1}</span>
-//     }
-// },
+//   {
+//     title: "编号",
+//     dataIndex: "number",
+//     width: 200,
+//     align: "center",
+//     render: (text, row, index) => {
+//         return <span>{index+1}</span>
+//       }
+//   },
 //     {
 //     title: "发票类型",
 //     dataIndex: "invoiceType",
@@ -320,15 +320,15 @@ export default InvoiceManage;
 // data: Mock.mock({
 //   "list|10-100": [
 //     {
-// "key|+1": 0,
-// 'invoiceType|1': ["单位","个人"],
-// orderNumber: "@id(5)",
-// invoiceName: "@cname",
-// lookUp:'@cname',
-// ein:'@integer(1,100)',
-// phoneNumber: "@id",
-// email: "@email",
-// userName:'@cname'
+//       "key|+1": 0,
+//       'invoiceType|1': ["单位","个人"],
+//       orderNumber: "@id(5)",
+//       invoiceName: "@cname",
+//       lookUp:'@cname',
+//       ein:'@integer(1,100)',
+//       phoneNumber: "@id",
+//       email: "@email",
+//       userName:'@cname'
 //     }
 //   ]
 // }).list

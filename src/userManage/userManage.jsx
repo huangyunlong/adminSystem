@@ -241,6 +241,5 @@ class UserManage extends React.Component {
     );
   }
 }
-export default UserManage;
 
- 
+export default UserManage;

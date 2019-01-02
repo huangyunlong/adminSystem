@@ -48,15 +48,17 @@ function getBase64(img, callback) {
  * @returns
  */
 function beforeUpload(file) {
-  const isJPG = file.type === "image/jpeg";
+  const isJPG = file.type === "image/jpeg" || file.type === "image/png";
   if (!isJPG) {
-    message.error("You can only upload JPG file!");
+    message.error("只能上传jpg,jpeg,png格式的图片!");
+    return false;
   }
-  const isLt2M = file.size / 1024 / 1024 < 5;
-  if (!isLt2M) {
-    message.error("Image must smaller than 5MB!");
+  const isLt5M = file.size / 1024 / 1024 < 5;
+  if (!isLt5M) {
+    message.error("上传图片不能大于5M!");
+    return false;
   }
-  return isJPG && isLt2M;
+  return true;
 }
 
 @inject("myGlobal")
@@ -72,12 +74,14 @@ class MyModal extends React.Component {
       this.addRowMode = true;
     }
     if (this.addRowMode) {
-      this.row = {};
+      this.row = {
+        img_url_list: []
+      };
     } else {
       this.row = _.clone(relativeRow);
       this.row.img_url_list = this.row.img_url_list.map(item => {
         return {
-          uid: Mock.Random.integer(),
+          uid: Mock.Random.integer(1, 10000),
           url: item
         };
       });
@@ -96,6 +100,9 @@ class MyModal extends React.Component {
         rel = null;
       newRow.img_url_list = newRow.img_url_list.map(item => {
         return item.url || _.get(item, "response.data[0]");
+      });
+      newRow.img_url_list = newRow.img_url_list.filter(item => {
+        return item != null;
       });
       // 如果是增加模式
       if (this.addRowMode) {
@@ -185,10 +192,16 @@ class MyModal extends React.Component {
               valuePropName: "fileList",
               initialValue: this.row.img_url_list,
               getValueFromEvent: e => {
+                let array = [];
                 if (Array.isArray(e)) {
-                  return e;
+                  array = e;
+                } else {
+                  array = e.fileList;
                 }
-                return e && e.fileList;
+                array = array.filter(item => {
+                  return item.uid;
+                });
+                return array;
               }
             })(
               <Upload
@@ -361,17 +374,9 @@ class MyTable extends React.Component {
         render: (text, row, index) => {
           let imgUrl = row.img_url_list || [];
           return (
-            <img
-              onClick={() => {
-                var html = `<html><body>
-          <img width="100%" src="${imgUrl[0]}" />
-        </body></html>`;
-                let a = window.open();
-                a.document.write(html);
-              }}
-              className="smallImg"
-              src={imgUrl[0]}
-            />
+            <a href={imgUrl[0]} target="__blank">
+              <img className="smallImg" src={imgUrl[0]} />
+            </a>
           );
         }
       },

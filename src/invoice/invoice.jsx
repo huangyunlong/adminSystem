@@ -1,29 +1,50 @@
 import React from "react";
 import { observable } from "mobx";
-import { observer } from "mobx-react";
+import { observer, inject } from "mobx-react";
 import { Button, message } from "antd";
 import MyRichText from "../components/myRichText/myRichText.jsx";
+import tool from "../tools/tool.js";
 
 import "./invoice.css";
 
+@inject("myGlobal")
 @observer
 class Invoice extends React.Component {
-  content = "";
+  componentWillMount() {
+    (async () => {
+      let data = await tool.requestAjaxSync(
+        this.props.myGlobal.mockUrl + "/invoice/getData",
+        "get"
+      );
+      data = data.data;
+      this.refs.richText.setHtml(data.data);
+    })();
+  }
+
+  dealContent(content){
+    
+  }
 
   render() {
     return (
       <div className="invoice">
         <h2>发票规定</h2>
-        <MyRichText
-          value={this.content}
-          onChange={(html,text) => {
-            this.content = html;
-          }}
-        />
+        <MyRichText defaultValue="加载中..." ref="richText" />
         <Button
           type="primary"
-          onClick={() => {
-            message.success("保存成功");
+          onClick={async () => {
+            let content = this.refs.richText.getHtml();
+            console.log(content);
+            let rel = await tool.requestAjaxSync(
+              this.props.myGlobal.mockUrl + "/invoice/updateData",
+              "post",
+              {
+                content
+              }
+            );
+            if (rel.data.state == 1) {
+              message.success("保存成功");
+            }
           }}
         >
           保存
