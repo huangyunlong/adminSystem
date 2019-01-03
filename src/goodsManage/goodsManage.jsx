@@ -1,153 +1,214 @@
 import React from "react";
 import { observer, inject } from "mobx-react";
-import { observable, action, computed } from "mobx";
+import { observable, computed } from "mobx";
+import {
+  Select,
+  Upload,
+  Form,
+  Modal,
+  DatePicker,
+  message,
+  Icon,
+  Table,
+  Input,
+  Button
+} from "antd";
+import tool from "../tools/tool.js";
+import Mock from "mockjs";
 import "./goodsManage.css";
-import MyTable from "../components/myTable/myTable.jsx";
-import { Button, Input, Upload, Select, Icon, message } from "antd";
 
-function beforeUpload(file) {
-  console.log(12314);
-  console.log(file);
-  const isJPG = file.type === "image/jpeg";
-  if (!isJPG) {
-    message.error("You can only upload JPG file!");
-  }
-  const isLt2M = file.size / 1024 / 1024 < 2;
-  if (!isLt2M) {
-    message.error("Image must smaller than 2MB!");
-  }
-  return isJPG && isLt2M;
-}
+const { RangePicker } = DatePicker;
+
+const FormItem = Form.Item;
+
+let publicUrl = "https://sp.tkfun.site/mock/14";
+publicUrl = "http://93.179.103.52:5000";
+let addUrl = publicUrl + "/theme/addData"; // 新增数据接口地址
+let updateUrl = publicUrl + "/theme/updateData";
+let deleteUrl = publicUrl + "/theme/deleteData";
+let getUrl = publicUrl + "/goods/getData";
+let uploadImgUrl = "http://93.179.103.52:1001/images/uploadImg";
+
+/**
+ * 获取图片的base64地址
+ *
+ * @param {*} img
+ * @param {*} callback
+ */
 function getBase64(img, callback) {
   const reader = new FileReader();
   reader.addEventListener("load", () => callback(reader.result));
   reader.readAsDataURL(img);
 }
 
+/**
+ * 上传前对图片的检查
+ *
+ * @param {*} file
+ * @returns
+ */
+function beforeUpload(file) {
+  const isJPG = file.type === "image/jpeg" || file.type === "image/png";
+  if (!isJPG) {
+    message.error("只能上传jpg,jpeg,png格式的图片!");
+    return false;
+  }
+  const isLt5M = file.size / 1024 / 1024 < 5;
+  if (!isLt5M) {
+    message.error("上传图片不能大于5M!");
+    return false;
+  }
+  return true;
+}
+
+@inject("myGlobal")
 @observer
-class GoodsManage extends React.Component {
-  handleChange = (column, row, info) => {
-    if (info.file.status === "uploading") {
-      return;
-    } else if (info.file.status === "done" || info.file.status === "error") {
-      // Get this url from response in real world.
-      getBase64(info.file.originFileObj, imageBase64Url => {
-        row[column.key] = imageBase64Url;
-      });
+class MyModal extends React.Component {
+  @observable row = {}; // 当前编辑行对象，窗口打开时赋值
+  addRowMode = false; // 是否是添加模式
+  @observable imgList = []; // 图片列表,里面对象格式参见 https://ant.design/components/upload-cn/#onChange
+
+  componentWillMount() {
+    let { editingRowIndex, relativeRow } = this.props;
+    if (editingRowIndex == -1) {
+      this.addRowMode = true;
     }
-  };
+    if (this.addRowMode) {
+      this.row = {};
+    } else {
+      this.row = _.clone(relativeRow);
+      this.row.img_url = this.row.img_url;
+    }
+  }
+
   /**
-   * 表头设计
+   * 保存
    */
-  defineColumn() {
-    this.columns = [
-      {
-        title: "商品名称",
-        dataIndex: "goodsName", // dataIndex 和 key 需要一致
-        key: "goodsName",
-        filterType: "string", // 表示过滤字符串,string,date
-        width: '10%',
-        align: "center", // 列文字排版
-        editable: true,
-        editWindow: {
-          // 编辑窗口中应用什么组件,input:普通文字输入框,img:多图片上传（此时需要传递数组进去）,select:下拉列表
-          type: "custom",
-          customRender: (form, row, column) => {
-            // 自定义渲染，如果不需要验证，也可以直接返回组件，但是需要自行改变row里面此字段的值
-            // row 是行信息,form是表单对象，column是列信息
-            return form.getFieldDecorator(column.key, {
-              rules: [
-                {
-                  required: true,
-                  message: "不能为空"
-                }
-              ],
-              initialValue: row[column.key]
-            })(<Input placeholder="请输入商品名称" />);
-          },
-          moreSet: {} // moreSet里的所有属性都会加到对应的组件中
+  async handleEditWindowSave() {
+    this.props.form.validateFields(async (error, values) => {
+      if (error) {
+        return;
+      }
+      let newRow = _.assign({}, this.row, values),
+        rel = null;
+      newRow.img_url_list = newRow.img_url_list.map(item => {
+        return item.url || _.get(item, "response.data[0]");
+      });
+      newRow.img_url_list = newRow.img_url_list.filter(item => {
+        return item != null;
+      });
+      // 如果是增加模式
+      if (this.addRowMode) {
+        rel = await tool.requestAjaxSync(addUrl, "post", {
+          addRow: newRow
+        });
+        rel = rel.data;
+        if (rel.state == 1) {
+          message.success("操作成功");
+        } else {
+          message.error(`操作失败,errorMsg:${rel.errorMsg}`);
+          return;
         }
-      },
-      {
-        title: "价格",
-        dataIndex: "goodsPrice", // dataIndex 和 key 需要一致
-        key: "goodsPrice",
-        filterType: "string", // 表示过滤字符串,string,date
-        align: "center", // 列文字排版
-        width:'6%',
-        editWindow: {
-          // 编辑窗口中应用什么组件,input:普通文字输入框,img:多图片上传（此时需要传递数组进去）,select:下拉列表
-          type: "custom",
-          customRender: (form, row, column) => {
-            // 自定义渲染，如果不需要验证，也可以直接返回组件，但是需要自行改变row里面此字段的值
-            // row 是行信息,form是表单对象，column是列信息
-            return form.getFieldDecorator(column.key, {
-              rules: [
-                {
-                  required: true,
-                  message: "不能为空"
-                }
-              ],
-              initialValue: row[column.key]
-            })(<Input placeholder="请输入商品价格" />);
-          },
-          moreSet: {}
+        this.props.reFetchDataSource();
+      } else {
+        // 编辑模式
+        rel = await tool.requestAjaxSync(updateUrl, "post", {
+          editRow: newRow
+        });
+        rel = rel.data;
+        if (rel.state == 1) {
+          message.success("操作成功");
+        } else {
+          message.error(`操作失败,errorMsg:${rel.errorMsg}`);
+          return;
         }
+        this.props.reFetchDataSource();
+      }
+      this.handleCancelEditWindow();
+    });
+  }
+
+  handleCancelEditWindow() {
+    this.addRowMode = false;
+    this.row = {};
+    this.props.resetChoosedRow();
+    this.props.cancelWindow();
+  }
+  render() {
+    let formItemLayout = {
+        labelCol: { span: 4 },
+        wrapperCol: { span: 20 }
       },
-      {
-        title: "缩略图",
-        dataIndex: "goodsImg",
-        key: "goodsImg",
-        align: "center",
-        width: '22%',
-        render: (text, row, index) => {
-          return (
-            <img
-              onClick={() => {
-                var html = `<html><body>
-          <img width="100%" src=${row.goodsImg} />
-        </body></html>`;
-                let a = window.open();
-                a.document.write(html);
-              }}
-              className="smallImg"
-              src={row.goodsImg}
-            />
-          );
-        },
-        editWindow: {
-          // 编辑窗口中应用什么组件,input:普通文字输入框,img:多图片上传（此时需要传递数组进去）,select:下拉列表
-          type: "custom",
-          customRender: (form, row, column) => {
-            // 自定义渲染，如果不需要验证，也可以直接返回组件，但是需要自行改变row里面此字段的值
-            // row 是行信息,form是表单对象，column是列信息
-            return form.getFieldDecorator(column.key, {
+      { form } = this.props;
+    var Option = Select.Option;
+    var children = [];
+    for (let i = 10; i < 36; i++) {
+      children.push(
+        <Option key={i.toString(36) + i}>{i.toString(36) + i}</Option>
+      );
+    }
+    return (
+      <Modal
+        destroyOnClose
+        title="编辑"
+        width="70%"
+        maskClosable
+        centered
+        visible={this.props.visible}
+        onOk={this.handleEditWindowSave.bind(this)}
+        onCancel={this.handleCancelEditWindow.bind(this)}
+      >
+        <Form>
+          <FormItem label="商品名称" {...formItemLayout}>
+            {form.getFieldDecorator("goods_name", {
               rules: [
                 {
                   required: true,
                   message: "不能为空"
                 }
               ],
-              initialValue: row[column.key]
+              initialValue: this.row["goods_name"]
+            })(<Input placeholder="不能为空" />)}
+          </FormItem>
+          <FormItem label="商品价格" {...formItemLayout}>
+            {form.getFieldDecorator("price", {
+              rules: [
+                {
+                  required: true,
+                  message: "不能为空"
+                }
+              ],
+              initialValue: this.row["price"]
+            })(<Input placeholder="不能为空" />)}
+          </FormItem>
+          <FormItem label="缩略图" {...formItemLayout}>
+            {form.getFieldDecorator("img_url", {
+              rules: [
+                {
+                  required: true,
+                  message: "不能为空"
+                }
+              ],
+              initialValue: this.row.img_url
             })(
               <Upload
                 listType="picture-card"
                 className="avatar-uploader"
                 showUploadList={false}
                 beforeUpload={beforeUpload}
-                onChange={this.handleChange.bind(this, column, row)}
                 onPreview={file => {
                   var html = `<html><body>
                           <img width="100%" src="${file.goodsImg}" />
                         </body></html>`;
                   let a = window.open();
                   a.document.write(html);
+                  // onChange={this.handleChange.bind(this, column, this.row)}
                 }}
               >
-                {row[column.key] ? (
+                {this.row.img_url ? (
                   <img
                     style={{ width: "100px", height: "100px" }}
-                    src={row[column.key]}
+                    src={this.row.img_url}
                     alt=""
                   />
                 ) : (
@@ -157,29 +218,200 @@ class GoodsManage extends React.Component {
                   </div>
                 )}
               </Upload>
-            );
-          },
-          moreSet: {} // moreSet里的所有属性都会加到对应的组件中
+            )}
+          </FormItem>
+          <FormItem label="状态" {...formItemLayout}>
+            {form.getFieldDecorator("themes_id", {
+              rules: [
+                {
+                  required: true,
+                  message: "不能为空"
+                }
+              ],
+              initialValue: this.row["themes_id"]
+            })(
+              <Select
+                mode="multiple"
+                style={{ width: "100%" }}
+                placeholder="Please select"
+                defaultValue={["主题二", "主题三", "主题一"]}
+              >
+                {children}
+              </Select>
+            )}
+          </FormItem>
+          <FormItem label="状态" {...formItemLayout}>
+            {form.getFieldDecorator("status", {
+              rules: [
+                {
+                  required: true,
+                  message: "不能为空"
+                }
+              ],
+              initialValue: this.row["status"]
+            })(
+              <Select>
+                <Select.Option value="UP">显示中</Select.Option>
+                <Select.Option value="DOWN">已下架</Select.Option>
+              </Select>
+            )}
+          </FormItem>
+        </Form>
+      </Modal>
+    );
+  }
+}
+
+// 用来创建表单验证的必要逻辑
+MyModal = Form.create()(MyModal);
+
+@inject("myGlobal")
+@observer
+class MyTable extends React.Component {
+  @observable tableHeight = 0; // 表格高度
+  @observable editingRowIndex = -1; // 正在编辑的行在datasource中的下标
+  @observable editWindowVisible = false; // 是否打开编辑行窗口
+  @observable dataSource = []; // 表体
+  @observable columns = []; // 表头
+  @observable
+  pagination = {
+    showSizeChanger: true,
+    current: 0,
+    pageSize: 10,
+    total: 100,
+    showTotal: total => {
+      return `共 ${total} 条`;
+    },
+    pageSizeOptions: ["10", "20", "50", "100"]
+  };
+  @observable loading = false;
+  lastRequestTableParams = {};
+  nowSelectedRows = [];
+
+  @computed
+  get nowSelectedRow() {
+    return _.get(this.dataSource, this.editingRowIndex);
+  }
+
+  componentWillMount() {
+    this.initTable();
+  }
+
+  componentDidMount() {
+    setTimeout(() => {
+      if (this.props.mode == "edit") {
+        this.tableHeight = this.refs.myTable.offsetHeight - 40 - 100;
+      } else {
+        this.tableHeight = this.refs.myTable.offsetHeight - 100;
+      }
+    }, 0);
+  }
+
+  handleRowEdit(index) {
+    this.editingRowIndex = index;
+    this.editWindowVisible = true;
+  }
+
+  /**
+   * 单行删除
+   *
+   * @param {*} index
+   */
+  async handleRowDelete(index) {
+    let row = this.dataSource[index];
+    let rel = await tool.requestAjaxSync(deleteUrl, "post", {
+      ids: [row.id]
+    });
+    rel = rel.data;
+    if (rel.state == 1) {
+      this.fetchDataSource();
+      message.success("操作成功");
+    } else {
+      message.error(`操作失败,errorMsg:${rel.errorMsg}`);
+    }
+  }
+
+  /**
+   * 多行删除
+   *
+   */
+  async handleRowsDelete() {
+    let ids = this.nowSelectedRows.map(item => {
+      return item.id;
+    });
+    if (ids.length <= 0) {
+      message.error("未选中行");
+      return;
+    }
+    let rel = await tool.requestAjaxSync(deleteUrl, "post", {
+      ids: ids
+    });
+    rel = rel.data;
+    if (rel.state == 1) {
+      this.fetchDataSource();
+      this.nowSelectedRows = [];
+      message.success("操作成功");
+    } else {
+      message.error(`操作失败,errorMsg:${rel.errorMsg}`);
+    }
+  }
+
+  /**
+   * 定义表头
+   * 参考文档
+   * https://ant.design/components/table-cn/#components-table-demo-edit-row
+   *
+   * @memberof goodsManage
+   */
+  defineColumns() {
+    this.columns = [
+      {
+        title: "商品名称",
+        dataIndex: "goods_name", // dataIndex 和 key 需要一致
+        key: "goods_name",
+        filterType: "string", // 表示过滤字符串,string,date
+        width: 150,
+        sorter: true, // 是否可排序
+        align: "center" // 列文字排版
+      },
+      {
+        title: "价格",
+        dataIndex: "price", // dataIndex 和 key 需要一致
+        key: "price",
+        filterType: "string", // 表示过滤字符串,string,date
+        width: 150,
+        sorter: true, // 是否可排序
+        align: "center" // 列文字排版
+      },
+      {
+        title: "缩略图",
+        dataIndex: "img_url",
+        key: "img_url",
+        align: "center",
+        render: (text, row, index) => {
+          let imgUrl = row.img_url;
+          return (
+            <a href={imgUrl} target="__blank">
+              <img className="smallImg" src={imgUrl} />
+            </a>
+          );
         }
       },
       {
         title: "商品描述",
-        dataIndex: "goodsDesc",
-        key: "goodsDesc",
-        align: "center",
-        width: '12%',
-        editWindow: {
-          type: "richText"
-        }
+        dataIndex: "goods_desc", // dataIndex 和 key 需要一致
+        key: "goods_desc",
+        width: 150,
+        sorter: true, // 是否可排序
+        align: "center" // 列文字排版
       },
       {
         title: "所属主题",
-        dataIndex: "itThems",
-        key: "itThems",
+        dataIndex: "theme_id",
+        key: "theme_id",
         align: "center",
-        width:'12%',
+        width: "12%",
         editWindow: {
-          type: "custom",
           customRender: (form, row, column) => {
             var Option = Select.Option;
             var children = [];
@@ -217,55 +449,261 @@ class GoodsManage extends React.Component {
         key: "status",
         align: "center",
         sorter: true,
-        width: '10%',
+        width: 150,
         render: text => {
           let relText = "";
           switch (text) {
-            case "inDisplay":
-              relText = "上架";
+            case "UP":
+              relText = "显示中";
               break;
-            case "lowerShelf":
-              relText = "下架";
+            case "DOWN":
+              relText = "已下架";
               break;
           }
           return (
-            <span style={{ color: text == "inDisplay" ? "#237804" : "" }}>
+            <span style={{ color: text == "UP" ? "#237804" : "" }}>
               {relText}
             </span>
           );
-        },
-        editWindow: {
-          type: "select",
-          optionList: [
-            {
-              title: "上架",
-              value: "inDisplay"
-            },
-            {
-              title: "下架",
-              value: "lowerShelf"
-            }
-          ],
-          moreSet: {
-            showSearch: false, // 是否需要搜索框，这个属性是antd中的，可自行配置
-            filterOption: (input, option) =>
-              option.props.children
-                .toLowerCase()
-                .indexOf(input.toLowerCase()) >= 0
-          }
         }
       }
     ];
+
+    this.columns.forEach(item => {
+      if (item.filterType == "string") {
+        _.merge(item, { ...this.getStringColumnSearchProps(item.title) });
+      } else if (item.filterType == "date") {
+        _.merge(item, { ...this.getDateColumnSearchProps(item.title) });
+      }
+    });
+
+    this.columns.unshift({
+      key: Math.random(),
+      title: "序号",
+      render: (text, row, index) => {
+        return <span>{index + 1}</span>;
+      },
+      width: 100,
+      align: "center"
+    });
+    if (this.props.mode == "edit") {
+      this.columns.push({
+        key: Math.random(),
+        title: "操作",
+        width: 150,
+        align: "center",
+        render: (text, record, index) => {
+          return (
+            <div>
+              <span
+                style={{ color: "#1890ff", cursor: "pointer", marginRight: 10 }}
+                onClick={this.handleRowEdit.bind(this, index)}
+              >
+                编辑
+              </span>
+              <span
+                style={{ color: "#1890ff", cursor: "pointer" }}
+                onClick={this.handleRowDelete.bind(this, index)}
+              >
+                删除
+              </span>
+            </div>
+          );
+        }
+      });
+    }
   }
-  componentWillMount() {
-    this.defineColumn();
+
+  /**
+   * 获取表格数据并更新到this.dataSource里
+   * @param {*} params = {
+      pageSize,  // 每页多少条数据
+      page, // 当前页码
+      sortField, // 当前排序字段
+      sortOrder, // 当前排序方式
+    }
+   */
+  async fetchDataSource(params) {
+    this.loading = true;
+    params = params || this.lastRequestTableParams;
+    let data = await tool.requestAjaxSync(getUrl, "post", {
+      getTableDataParams: params
+    });
+    data = data.data;
+    this.dataSource = data.datas.map(item => {
+      return {
+        key: item.id,
+        ...item
+      };
+    });
+    this.pagination.total = data.tableInfo.total;
+    this.loading = false;
+    this.lastRequestTableParams = params;
   }
+
+  initTable() {
+    this.defineColumns();
+    this.fetchDataSource({
+      pageSize: 10,
+      page: 1
+    });
+  }
+
+  addRow() {
+    this.editWindowVisible = true;
+  }
+
+  async handleTableChange(pagination, filters, sorter) {
+    this.pagination = _.merge(this.pagination, pagination);
+
+    await this.fetchDataSource({
+      pageSize: pagination.pageSize,
+      page: pagination.current,
+      sortField: sorter.field,
+      sortOrder: sorter.order,
+      filters
+    });
+  }
+
+  getDateColumnSearchProps = searchTitle => ({
+    filterDropdown: ({
+      setSelectedKeys,
+      selectedKeys,
+      confirm,
+      clearFilters
+    }) => (
+      <div className="custom-filter-dropdown-date">
+        <RangePicker
+          onChange={(date, dateString) => {
+            setSelectedKeys(dateString ? [dateString] : []);
+            confirm();
+          }}
+          style={{ width: 250, marginBottom: 8, display: "block" }}
+        />
+      </div>
+    ),
+    filterIcon: filtered => (
+      <Icon type="search" style={{ color: filtered ? "#1890ff" : undefined }} />
+    )
+  });
+
+  getStringColumnSearchProps = searchTitle => ({
+    filterDropdown: ({
+      setSelectedKeys,
+      selectedKeys,
+      confirm,
+      clearFilters
+    }) => (
+      <div className="custom-filter-dropdown-string">
+        <Input
+          ref={node => {
+            this.searchInput = node;
+          }}
+          placeholder={`搜索 【${searchTitle}】`}
+          value={selectedKeys[0]}
+          onChange={e =>
+            setSelectedKeys(e.target.value ? [e.target.value] : [])}
+          onPressEnter={() => confirm()}
+          style={{ width: 188, marginBottom: 8, display: "block" }}
+        />
+        <Button
+          type="primary"
+          onClick={() => confirm()}
+          icon="search"
+          size="small"
+          style={{ width: 90, marginRight: 8 }}
+        >
+          搜索
+        </Button>
+        <Button
+          onClick={() => clearFilters()}
+          size="small"
+          style={{ width: 90 }}
+        >
+          重置
+        </Button>
+      </div>
+    ),
+    filterIcon: filtered => (
+      <Icon type="search" style={{ color: filtered ? "#1890ff" : undefined }} />
+    ),
+    onFilterDropdownVisibleChange: visible => {
+      if (visible) {
+        setTimeout(() => this.searchInput.select());
+      }
+    }
+  });
+
+  render() {
+    return (
+      <div className="goodsManageTable" ref="myTable">
+        <div className="tool">
+          {this.props.mode == "edit" ? (
+            <React.Fragment>
+              <Button type="primary" onClick={this.addRow.bind(this)}>
+                增加
+              </Button>
+              <Button type="danger" onClick={this.handleRowsDelete.bind(this)}>
+                删除
+              </Button>
+            </React.Fragment>
+          ) : (
+            ""
+          )}
+        </div>
+        <Table
+          bordered
+          className="table"
+          scroll={{ x: "100%", y: this.tableHeight }}
+          rowSelection={
+            this.props.mode == "edit" ? (
+              {
+                onChange: (selectedRowKeys, selectedRows) => {
+                  this.nowSelectedRows = selectedRows;
+                }
+              }
+            ) : null
+          }
+          loading={this.loading}
+          dataSource={this.dataSource}
+          columns={this.columns}
+          pagination={this.pagination}
+          onChange={this.handleTableChange.bind(this)}
+        />
+        {/** 编辑窗口 */}
+        {this.editWindowVisible ? (
+          <MyModal
+            editingRowIndex={this.editingRowIndex}
+            relativeRow={this.nowSelectedRow}
+            visible={this.editWindowVisible}
+            cancelWindow={() => {
+              this.editWindowVisible = false;
+            }}
+            reFetchDataSource={() => {
+              this.fetchDataSource(this.lastRequestTableParams);
+            }}
+            resetChoosedRow={() => {
+              this.editingRowIndex = -1;
+            }}
+            columns={this.columns}
+          />
+        ) : (
+          ""
+        )}
+      </div>
+    );
+  }
+}
+
+@inject("myGlobal")
+@observer
+class GoodsManage extends React.Component {
   render() {
     return (
       <div className="goodsManage" ref="goodsManage">
         <h2>商品管理</h2>
         <div className="tablePanel">
-          <MyTable columns={this.columns} tableName="goodsManage" mode="edit" tableWidth="100%"/>
+          <MyTable mode="edit" />
         </div>
       </div>
     );
@@ -273,20 +711,3 @@ class GoodsManage extends React.Component {
 }
 
 export default GoodsManage;
-// Mock.mock({
-//   "list|10-100": [
-//     {
-//       "key|+1": 0,
-//       id: "@integer()",
-//       'goodsName': "@ctitle()",
-//       'goodsPrice': "@integer(1,500)",
-//       "goodsImg|1": [
-//             "https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1544962465147&di=91a2f0c83ce1ee20733ca0b659a32152&imgtype=0&src=http%3A%2F%2Fpic17.nipic.com%2F20111023%2F8104044_230939695000_2.jpg",
-//             "http://pic28.photophoto.cn/20130818/0020033143720852_b.jpg"
-//           ],
-//       "goodsDesc":"@ctitle",
-//       "status|1": ["lowerShelf", "inDisplay"],
-//       "itThems|1":["主题一","主题三","主题二"]
-//     }
-//   ]
-// }).list;
