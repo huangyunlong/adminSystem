@@ -284,6 +284,7 @@ class MyTable extends React.Component {
     },
     pageSizeOptions: ["10", "20", "50", "100"]
   };
+  @observable tableX = "100%";
   @observable loading = false;
   lastRequestTableParams = {};
   nowSelectedRows = [];
@@ -388,6 +389,7 @@ class MyTable extends React.Component {
         dataIndex: "img_url",
         key: "img_url",
         align: "center",
+        width: 150,
         render: (text, row, index) => {
           let imgUrl = row.img_url;
           return (
@@ -410,7 +412,7 @@ class MyTable extends React.Component {
         dataIndex: "theme_id",
         key: "theme_id",
         align: "center",
-        width: "12%",
+        width: 120,
         editWindow: {
           customRender: (form, row, column) => {
             var Option = Select.Option;
@@ -543,6 +545,11 @@ class MyTable extends React.Component {
 
   initTable() {
     this.defineColumns();
+    this.tableX = 0;
+    this.columns.forEach(item => {
+      this.tableX += item.width || 100;
+    });
+    this.tableX += 100;
     this.fetchDataSource({
       pageSize: 10,
       page: 1
@@ -602,7 +609,8 @@ class MyTable extends React.Component {
           placeholder={`搜索 【${searchTitle}】`}
           value={selectedKeys[0]}
           onChange={e =>
-            setSelectedKeys(e.target.value ? [e.target.value] : [])}
+            setSelectedKeys(e.target.value ? [e.target.value] : [])
+          }
           onPressEnter={() => confirm()}
           style={{ width: 188, marginBottom: 8, display: "block" }}
         />
@@ -635,6 +643,7 @@ class MyTable extends React.Component {
   });
 
   render() {
+    let tableX = this.tableX;
     return (
       <div className="goodsManageTable" ref="myTable">
         <div className="tool">
@@ -654,15 +663,15 @@ class MyTable extends React.Component {
         <Table
           bordered
           className="table"
-          scroll={{ x: "100%", y: this.tableHeight }}
+          scroll={{ x: tableX, y: this.tableHeight }}
           rowSelection={
-            this.props.mode == "edit" ? (
-              {
-                onChange: (selectedRowKeys, selectedRows) => {
-                  this.nowSelectedRows = selectedRows;
+            this.props.mode == "edit"
+              ? {
+                  onChange: (selectedRowKeys, selectedRows) => {
+                    this.nowSelectedRows = selectedRows;
+                  }
                 }
-              }
-            ) : null
+              : null
           }
           loading={this.loading}
           dataSource={this.dataSource}
@@ -709,5 +718,4 @@ class GoodsManage extends React.Component {
     );
   }
 }
-
 export default GoodsManage;

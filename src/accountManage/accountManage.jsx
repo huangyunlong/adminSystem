@@ -14,7 +14,11 @@ import {
   Popconfirm
 } from "antd";
 import Mock from "mockjs";
+import tool from "../tools/tool.js";
 import _ from "lodash";
+let publicUrl = "https://sp.tkfun.site/mock/14";
+publicUrl = "http://93.179.103.52:5000";
+let getUrl = "http://93.179.103.52:5000" + "/admin/getData";
 /**
  * 更新表格信息
  */
@@ -273,18 +277,7 @@ class AccountManage extends React.Component {
   };
   @observable loading = false;
   @observable nowSelectedRows = [];
-  @observable
-  datasource = Mock.mock({
-    "accountList|40-100": [
-      {
-        userName: "@cname",
-        "isAdime|1": ["0", "1"],
-        "key|+1": 1,
-        "id|+1": 1,
-        passWord: "@Id"
-      }
-    ]
-  }).accountList;
+  @observable datasource =[]
   @computed
   get nowSelectedRow() {
     return _.get(this.dataSource, this.editingRowIndex);
@@ -296,8 +289,8 @@ class AccountManage extends React.Component {
     this.columns = [
       {
         title: "用户名",
-        dataIndex: "userName", // dataIndex 和 key 需要一致
-        key: "userName",
+        dataIndex: "login_name", // dataIndex 和 key 需要一致
+        key: "login_name",
         align: "center", // 列文字排版
         width: "30%"
       },
@@ -358,25 +351,26 @@ class AccountManage extends React.Component {
   // 获取数据
   async fetchDataSource(params = {}) {
     this.loading = true;
-    let data = [];
-    data = await updateRowWithServer("get", {
-      getTableDataParams: {
-        ...params
-      }
+    let data = await tool.requestAjaxSync(getUrl, "POST", {
+      getTableDataParams: params
     });
-    data = data.datas;
-    data = this.dataSource;
-    this.dataSource = this.datasource;
-    this.pagination.total = this.dataSource.length;
+    console.log('data')
+    console.log(data)
+    let list = data.data.datas;
+    this.dataSource = list.map(item => {
+      return {
+        key: item.id,
+        ...item
+      };
+    });
+    this.pagination.total = data.data.tableInfo.total;
+    this.pagination = _.clone(this.pagination);
     this.loading = false;
   }
   initTable() {
     let params = {
-      pageSize: this.pagination.pageSize,
-      page: this.pagination.current,
-      sortField: this.pagination.field,
-      sortOrder: this.pagination.order,
-      searchContent: this.searchUserName
+      pageSize: 10,
+      page: 1
     };
     this.defineColumn();
     this.fetchDataSource(params);
@@ -483,21 +477,14 @@ class AccountManage extends React.Component {
    * @param {any} sorter 
    * @memberof AccountManage
    */
-  handleTableChange(paginations, filters, sorter) {
+  async handleTableChange(paginations, filters, sorter) {
     this.pagination = _.merge(this.pagination, paginations);
-    let params = {
-      pageSize: this.pagination.pageSize,
-      page: this.pagination.current,
-      sortField: this.pagination.field,
-      sortOrder: this.pagination.order,
-      searchContent: this.searchUserName
-    };
-    this.fetchDataSource({
-      pageSize: this.pagination.pageSize,
-      page: this.pagination.current - 1,
-      sortField: this.pagination.field,
-      sortOrder: this.pagination.order,
-      searchContent: this.searchUserName
+    await this.fetchDataSource({
+      pageSize: pagination.pageSize,
+      page: pagination.current,
+      sortField: sorter.field,
+      sortOrder: sorter.order,
+      filters
     });
   }
   componentWillReceiveProps(nextProps) {}

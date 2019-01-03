@@ -11,12 +11,13 @@ import "./userManage.css";
 const { RangePicker } = DatePicker;
 let publicUrl = "https://sp.tkfun.site/mock/14";
 publicUrl = "http://93.179.103.52:5000";
-let getUrl = publicUrl + "/order/getData";
+let getUrl = publicUrl + "/member/getData";
 @observer
 class UserManage extends React.Component {
   @observable tableHeight = 0; // 表格高度
   @observable dataSource = []; // 表体
   @observable columns = []; // 表头
+  @observable tableX = "100%";
   @observable
   pagination = {
     showSizeChanger: true,
@@ -35,8 +36,8 @@ class UserManage extends React.Component {
     this.columns = [
       {
         title: "用户头像",
-        dataIndex: "userImage",
-        key: "userImage",
+        dataIndex: "photo",
+        key: "photo",
         align: "center",
         width: 150,
         render: (text, row, index) => {
@@ -44,13 +45,13 @@ class UserManage extends React.Component {
             <img
               onClick={() => {
                 var html = `<html><body>
-      <img width="100%" src="${row.userImage}" />
+      <img width="100%" src="${row.photo}" />
     </body></html>`;
                 let a = window.open();
                 a.document.write(html);
               }}
               className="userImage"
-              src={row.userImage}
+              src={row.photo}
             />
           );
         }
@@ -60,7 +61,8 @@ class UserManage extends React.Component {
         dataIndex: "nick_name",
         key: "nick_name",
         width: 100,
-        align: "center"
+        align: "center",
+        filterType:"string"
       },
       {
         title: "用户名",
@@ -68,67 +70,86 @@ class UserManage extends React.Component {
         key: "userName",        
         width: 100,
         align: "center",
-        filterType: "string" // 表示过滤字符串,string,date
       },
       {
         title: "性别",
-        dataIndex: "sex",
-        key: "sex",        
+        dataIndex: "gender",
+        key: "gender",        
         align: "center",
         width: 150,
-        align: "center"
+        align: "center",
+        render:(text,row)=>{
+          let sex = row.gender==1?"男":"女"
+          return (
+            <span>{sex}</span>
+          )
+        }
       },
       {
         title: "手机号",
-        dataIndex: "phoneNumber",
-        key: "phoneNumber",        
+        dataIndex: "mobile",
+        key: "mobile",        
         width: 150,
         align: "center"
       },
       {
         title: "注册时间",
-        dataIndex: "registeredTime",
-        key: "registeredTime",        
+        dataIndex: "register_time",
+        key: "register_time",        
         width: 150,
         align: "center"
       }
     ]
+    this.columns.forEach(item => {
+      if (item.filterType == "string") {
+        _.merge(item, { ...this.getStringColumnSearchProps(item.title) });
+      } else if (item.filterType == "date") {
+        _.merge(item, { ...this.getDateColumnSearchProps(item.title) });
+      }
+    });
   }
   async fetchDataSource(params) {
     this.loading = true;
     let data = await tool.requestAjaxSync(getUrl, "POST", {
       getTableDataParams: params
     });
+    console.log('data');
+    console.log(data)
     this.loading = false;
     console.log("data");
     console.log(data);
-    data = data.data;
+    let list = data.data.datas;
     // let list = data.datas;
-    let list = Mock.mock({
-      "list|10-100": [
-        {
-          "key|+1": 0,
-          orderNumber: "@id(5)",
-          cardNumber: "@id(5)",
-          cardDesc: "@ctitle",
-          allPrice: "@integer(200,1000)",
-          useTime: '@datetime("yyyy-MM-dd HH:mm:ss")',
-          "status|1": ["已付款", "已使用"]
-        }
-      ]
-    }).list;
+    // let list = Mock.mock({
+    //   "list|10-100": [
+    //     {
+    //       "key|+1": 0,
+    //       orderNumber: "@id(5)",
+    //       cardNumber: "@id(5)",
+    //       cardDesc: "@ctitle",
+    //       allPrice: "@integer(200,1000)",
+    //       useTime: '@datetime("yyyy-MM-dd HH:mm:ss")',
+    //       "status|1": ["已付款", "已使用"]
+    //     }
+    //   ]
+    // }).list;
     this.dataSource = list.map(item => {
       return {
         key: item.id,
         ...item
       };
     });
-    this.pagination.total = data.tableInfo.total;
+    this.pagination.total = data.data.tableInfo.total;
     this.pagination = _.clone(this.pagination);
     this.loading = false;
   }
   initTable() {
     this.defineColumns();
+    this.tableX = 0;
+    this.columns.forEach(item => {
+      this.tableX += item.width || 100;
+    });
+    this.tableX += 100;
     this.fetchDataSource({
       pageSize: 10,
       page: 1
@@ -220,6 +241,7 @@ class UserManage extends React.Component {
     }
   });
   render() {
+    let tableX = this.tableX;
     return (
       <div className="userManage" ref="userManage">
         <h2>用户管理</h2>
@@ -227,7 +249,7 @@ class UserManage extends React.Component {
           <div className="userManage_tableContent">
             <Table
               className="table"
-              scroll={{ y: this.tableHeight }}
+              scroll={{x:tableX, y: this.tableHeight }}
               bordered
               columns={this.columns}
               dataSource={this.dataSource}

@@ -11,12 +11,13 @@ import "./invoiceManage.css";
 const { RangePicker } = DatePicker;
 let publicUrl = "https://sp.tkfun.site/mock/14";
 publicUrl = "http://93.179.103.52:5000";
-let getUrl = publicUrl + "/order/getData";
+let getUrl = publicUrl + "/invoice/getData";
 @observer
 class InvoiceManage extends React.Component {
   @observable tableHeight = 0; // 表格高度
   @observable dataSource = []; // 表体
   @observable columns = []; // 表头
+  @observable tableX = "100%";
   @observable
   pagination = {
     showSizeChanger: true,
@@ -44,24 +45,28 @@ class InvoiceManage extends React.Component {
       // },
       {
         title: "发票类型",
-        dataIndex: "invoiceType",
-        key: "invoiceType",
-        width: 100,
-        align: "center"
+        dataIndex: "type",
+        key: "type",
+        width: 80,
+        align: "center",
+        render: text => {
+          let relText = text == "1" ? "个人" : "单位";
+          return <span>{relText}</span>;
+        }
       },
       {
         title: "订单号",
-        dataIndex: "orderNumber",
-        key: "orderNumber",
+        dataIndex: "order_no",
+        key: "order_no",
         align: "center",
-        width: 150,
+        width: 200,
         align: "center",
         filterType: "date" // 表示过滤字符串,string,date
       },
       {
         title: "时间",
-        dataIndex: "invoiceTime",
-        key: "invoiceTime",
+        dataIndex: "create_time",
+        key: "create_time",
         align: "center",
         width: 200,
         align: "center",
@@ -69,8 +74,8 @@ class InvoiceManage extends React.Component {
       },
       {
         title: "抬头",
-        dataIndex: "lookUp",
-        key: "lookUp",
+        dataIndex: "look_up_name",
+        key: "look_up_name",
         width: 150,
         align: "center"
       },
@@ -83,15 +88,15 @@ class InvoiceManage extends React.Component {
       },
       {
         title: "电话号码",
-        dataIndex: "phoneNumber",
-        key: "phoneNumber",
+        dataIndex: "phone_numer",
+        key: "phone_numer",
         width: 150,
         align: "center"
       },
       {
         title: "姓名",
-        dataIndex: "userName",
-        key: "userName",
+        dataIndex: "user_name",
+        key: "user_name",
         width: 150,
         align: "center",
         filterType: "string" // 表示过滤字符串,string,date                
@@ -121,23 +126,23 @@ class InvoiceManage extends React.Component {
     console.log("data");
     console.log(data);
     data = data.data;
-    // let list = data.datas;
-    let list = Mock.mock({
-      "list|10-100": [
-        {
-          "key|+1": 0,
-          "invoiceType|1": ["单位", "个人"],
-          orderNumber: "@id(5)",
-          invoiceName: "@cname",
-          lookUp: "@cname",
-          ein: "@integer(1,100)",
-          phoneNumber: "@id",
-          email: "@email",
-          userName: "@cname",
-          invoiceTime: "@datetime('yyyy-MM-dd HH:mm:ss')"
-        }
-      ]
-    }).list;
+    let list = data.datas;
+    // let list = Mock.mock({
+    //   "list|10-100": [
+    //     {
+    //       "key|+1": 0,
+    //       "invoiceType|1": ["单位", "个人"],
+    //       orderNumber: "@id(5)",
+    //       invoiceName: "@cname",
+    //       lookUp: "@cname",
+    //       ein: "@integer(1,100)",
+    //       phoneNumber: "@id",
+    //       email: "@email",
+    //       userName: "@cname",
+    //       invoiceTime: "@datetime('yyyy-MM-dd HH:mm:ss')"
+    //     }
+    //   ]
+    // }).list;
     this.dataSource = list.map(item => {
       return {
         key: item.id,
@@ -150,6 +155,11 @@ class InvoiceManage extends React.Component {
   }
   initTable() {
     this.defineColumns();
+    this.tableX = 0;
+    this.columns.forEach(item => {
+      this.tableX += item.width || 100;
+    });
+    this.tableX += 100;
     this.fetchDataSource({
       pageSize: 10,
       page: 1
@@ -241,6 +251,7 @@ class InvoiceManage extends React.Component {
     }
   });
   render() {
+    let tableX = this.tableX;
     return (
       <div className="invoiceManage" ref="invoiceManage">
         <h2>发票管理</h2>
@@ -248,7 +259,7 @@ class InvoiceManage extends React.Component {
           <div className="invoiceManage_tableContent">
             <Table
               className="table"
-              scroll={{ y: this.tableHeight }}
+              scroll={{x: tableX, y: this.tableHeight }}
               bordered
               columns={this.columns}
               dataSource={this.dataSource}

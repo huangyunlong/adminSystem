@@ -280,6 +280,7 @@ class MyTable extends React.Component {
   @observable loading = false;
   lastRequestTableParams = {};
   nowSelectedRows = [];
+  @observable tableX = "100%";
 
   @computed get nowSelectedRow() {
     return _.get(this.dataSource, this.editingRowIndex);
@@ -371,6 +372,7 @@ class MyTable extends React.Component {
         dataIndex: "img_url_list",
         key: "img_url_list",
         align: "center",
+        width: 150,
         render: (text, row, index) => {
           let imgUrl = row.img_url_list || [];
           return (
@@ -492,6 +494,11 @@ class MyTable extends React.Component {
 
   initTable() {
     this.defineColumns();
+    this.tableX = 0;
+    this.columns.forEach(item => {
+      this.tableX += item.width || 100;
+    });
+    this.tableX += 100;
     this.fetchDataSource({
       pageSize: 10,
       page: 1
@@ -585,6 +592,7 @@ class MyTable extends React.Component {
   });
 
   render() {
+    let tableX = this.tableX;
     return (
       <div className="themeManageTable" ref="myTable">
         <div className="tool">
@@ -604,7 +612,7 @@ class MyTable extends React.Component {
         <Table
           bordered
           className="table"
-          scroll={{ x: "100%", y: this.tableHeight }}
+          scroll={{ x: tableX, y: this.tableHeight }}
           rowSelection={
             this.props.mode == "edit"
               ? {

@@ -12,15 +12,11 @@ const { Header, Sider, Content } = Layout;
 @observer
 class Home extends React.Component {
   @observable states = {
-    homeStyle: {
-      height: 0
-    },
     current: "",
     openKey: ""
   };
 
   componentWillMount() {
-    this.states.homeStyle.height = window.innerHeight;
     let curentRoute = this.props.location.pathname.split("/")[1]; //获取当前的路由
     this.states.current = curentRoute;
     if (
@@ -34,11 +30,11 @@ class Home extends React.Component {
       curentRoute == "themeManage" ||
       curentRoute == "invoiceManage" ||
       curentRoute == "cardManage" ||
-      curentRoute == "orderManage"||
+      curentRoute == "orderManage" ||
       curentRoute == "goodsManage"
     ) {
       this.states.openKey = "sub2";
-    } else if(curentRoute == "accountManage") {
+    } else if (curentRoute == "accountManage") {
       this.states.openKey = "sub3";
     }
   }
@@ -48,8 +44,8 @@ class Home extends React.Component {
 
   render() {
     return (
-      <Layout className="home" style={Object.assign({}, this.states.homeStyle)}>
-        <Sider>
+      <Layout className="home">
+        <Sider style={{ height: "100%", overflow: "auto" }}>
           <div className="logo">XXX ADMIN SYSTEM</div>
           <Menu
             theme="dark"

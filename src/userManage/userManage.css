@@ -6,7 +6,7 @@
             box-sizing: border-box;
             table {
                 height: calc(100% - 50px);
-                .smallImag {
+                .userImage {
                     height: 60px;
                     border-radius: 50%;
                     -webkit-border-radius: 50%;

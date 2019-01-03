@@ -1,6 +1,7 @@
 .home {
   --padding: 20px;
   --margin: 20px;
+  height:100vh;
 
   .content {
     box-sizing: border-box;

@@ -1,7 +1,7 @@
 import React from "react";
 import { observable } from "mobx";
 import { observer } from "mobx-react";
-import { Button, Input, Table, DatePicker,Icon} from "antd";
+import { Button, Input, Table, DatePicker, Icon, Modal } from "antd";
 import locale from "antd/lib/date-picker/locale/zh_CN";
 import "moment/locale/zh-cn";
 import Mock from "mockjs";
@@ -11,11 +11,14 @@ const { RangePicker } = DatePicker;
 let publicUrl = "https://sp.tkfun.site/mock/14";
 publicUrl = "http://93.179.103.52:5000";
 let getUrl = publicUrl + "/order/getData";
+let getDetail = "http://93.179.103.52:5000/order_dtl/getOrderDtl";
 @observer
 class OrderManage extends React.Component {
   @observable tableHeight = 0; // 表格高度
   @observable dataSource = []; // 表体
   @observable columns = []; // 表头
+  @observable modalIsShow = false;
+  @observable goodsDetailList = [];
   @observable
   pagination = {
     showSizeChanger: true,
@@ -28,7 +31,7 @@ class OrderManage extends React.Component {
     pageSizeOptions: ["10", "20", "50", "100"]
   };
   @observable loading = true;
-  @observable lastRequestTableParams={};
+  @observable lastRequestTableParams = {};
   defineColumns() {
     this.columns = [
       {
@@ -52,8 +55,14 @@ class OrderManage extends React.Component {
         key: "goodsDetail",
         align: "center",
         width: "12%",
-        render:(text,record)=>(
-          <a href="javascript:;" onClick={this.goodsDetail.bind(this,text,record)}>点击获取详情</a>
+        render: (text, record) => (
+          <a
+            href="javascript:;"
+            key = {record.id}
+            onClick={this.goodsDetailClick.bind(this, text, record)}
+          >
+            点击获取详情
+          </a>
         )
       },
       {
@@ -83,7 +92,7 @@ class OrderManage extends React.Component {
         key: "create_time",
         width: "12%",
         align: "center",
-        filterType: "date"        
+        filterType: "date"
       },
       {
         title: "状态",
@@ -101,10 +110,7 @@ class OrderManage extends React.Component {
       }
     });
   }
-  goodsDetail(text,record){
-    console.log(1);
-    alert(record.order_no)
-  }
+
   async fetchDataSource(params) {
     this.loading = true;
     let data = await tool.requestAjaxSync(getUrl, "POST", {
@@ -168,7 +174,32 @@ class OrderManage extends React.Component {
       filters
     });
   }
-
+  // 点击订单号
+  async goodsDetailClick(text, record) {
+    
+    console.log("record");
+    console.log(record.order_no);
+    let data = await tool.requestAjaxSync(`${getDetail}/201901030000037001`, "get", {});
+    console.log("data");
+    console.log(data.data);
+    this.goodsDetailList = data.data.goodsList;
+    this.goodsDetailList = data.data.goodsList.map(item => {
+      return {
+        key: item.goodsId,
+        ...item
+      };
+    });
+    this.modalIsShow = true;
+    // console.log(this.goodsDetailList)
+  }
+  // modal取消框
+  handleGoodsDetailCancel() {
+    this.modalIsShow = false;
+  }
+  // modal确定框
+  handleGoodDetail() {
+    this.modalIsShow = false;
+  }
   getDateColumnSearchProps = searchTitle => ({
     filterDropdown: ({
       setSelectedKeys,
@@ -206,7 +237,8 @@ class OrderManage extends React.Component {
           placeholder={`搜索 【${searchTitle}】`}
           value={selectedKeys[0]}
           onChange={e =>
-            setSelectedKeys(e.target.value ? [e.target.value] : [])}
+            setSelectedKeys(e.target.value ? [e.target.value] : [])
+          }
           onPressEnter={() => confirm()}
           style={{ width: 188, marginBottom: 8, display: "block" }}
         />
@@ -253,6 +285,20 @@ class OrderManage extends React.Component {
               pagination={this.pagination}
               loading={this.loading}
             />
+            <Modal
+              visible={this.modalIsShow}
+              title="商品详情"
+              onOk={this.handleGoodDetail.bind(this)}
+              onCancel={this.handleGoodsDetailCancel.bind(this)}
+            >
+              {this.goodsDetailList.map(item => {
+                return (
+                    <p>
+                      {item}
+                    </p>
+                );
+              })}
+            </Modal>
           </div>
         </div>
       </div>
