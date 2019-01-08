@@ -16,18 +16,19 @@ import {
 import tool from "../tools/tool.js";
 import Mock from "mockjs";
 import "./goodsManage.css";
-
+import MyRichText from "../components/myRichText/myRichText.jsx";
 const { RangePicker } = DatePicker;
 
 const FormItem = Form.Item;
 
 let publicUrl = "https://sp.tkfun.site/mock/14";
-publicUrl = "http://93.179.103.52:5000";
-let addUrl = publicUrl + "/theme/addData"; // 新增数据接口地址
-let updateUrl = publicUrl + "/theme/updateData";
+publicUrl = "/api";
+let addUrl = publicUrl + "/goods/addData"; // 新增数据接口地址
+let updateUrl = publicUrl + "/goods/updateData";
 let deleteUrl = publicUrl + "/theme/deleteData";
 let getUrl = publicUrl + "/goods/getData";
-let uploadImgUrl = "http://93.179.103.52:1001/images/uploadImg";
+let getThems = publicUrl + "/theme/getThemeInfo";
+let uploadImgUrl = "/uploadImgApi/images/uploadImg";
 
 /**
  * 获取图片的base64地址
@@ -60,14 +61,14 @@ function beforeUpload(file) {
   }
   return true;
 }
-
 @inject("myGlobal")
 @observer
 class MyModal extends React.Component {
   @observable row = {}; // 当前编辑行对象，窗口打开时赋值
   addRowMode = false; // 是否是添加模式
   @observable imgList = []; // 图片列表,里面对象格式参见 https://ant.design/components/upload-cn/#onChange
-
+  @observable addImageLoading = false;
+  @observable editImageLoading = false;
   componentWillMount() {
     let { editingRowIndex, relativeRow } = this.props;
     if (editingRowIndex == -1) {
@@ -80,6 +81,7 @@ class MyModal extends React.Component {
       this.row.img_url = this.row.img_url;
     }
   }
+  componentDidMount() {}
 
   /**
    * 保存
@@ -91,12 +93,12 @@ class MyModal extends React.Component {
       }
       let newRow = _.assign({}, this.row, values),
         rel = null;
-      newRow.img_url_list = newRow.img_url_list.map(item => {
-        return item.url || _.get(item, "response.data[0]");
-      });
-      newRow.img_url_list = newRow.img_url_list.filter(item => {
-        return item != null;
-      });
+      newRow.img_url =
+        _.get(newRow, "img_url.file.url") ||
+        _.get(newRow, "img_url.file.response.data[0]") ||
+        newRow.img_url;
+      newRow.theme_id = newRow.theme;
+      delete newRow.theme;
       // 如果是增加模式
       if (this.addRowMode) {
         rel = await tool.requestAjaxSync(addUrl, "post", {
@@ -134,23 +136,38 @@ class MyModal extends React.Component {
     this.props.resetChoosedRow();
     this.props.cancelWindow();
   }
+  handleUploadChange(row, info) {
+    let { file, fileList } = info;
+    this.addImageLoading = true;
+    fileList = fileList.map(file => {
+      if (file.response) {
+        this.addImageLoading = false;
+        file.url = file.response.data[0];
+        row.img_url = file.url;
+      }
+      return file;
+    });
+  }
   render() {
     let formItemLayout = {
         labelCol: { span: 4 },
         wrapperCol: { span: 20 }
       },
       { form } = this.props;
+    let that = this;
     var Option = Select.Option;
     var children = [];
-    for (let i = 10; i < 36; i++) {
+    let themesList = this.props.themesList;
+    for (let i = 0; i < themesList.length; i++) {
       children.push(
-        <Option key={i.toString(36) + i}>{i.toString(36) + i}</Option>
+        <Option key={Number(themesList[i].id)} value={Number(themesList[i].id)}>{themesList[i].theme_name}</Option>
       );
     }
+
     return (
       <Modal
         destroyOnClose
-        title="编辑"
+        title={this.addRowMode == true ? "增加" : "编辑"}
         width="70%"
         maskClosable
         centered
@@ -181,28 +198,74 @@ class MyModal extends React.Component {
               initialValue: this.row["price"]
             })(<Input placeholder="不能为空" />)}
           </FormItem>
-          <FormItem label="缩略图" {...formItemLayout}>
-            {form.getFieldDecorator("img_url", {
+          <FormItem label="商品描述" {...formItemLayout}>
+            {form.getFieldDecorator("goods_desc", {
               rules: [
                 {
                   required: true,
                   message: "不能为空"
                 }
               ],
+              initialValue: this.row["goods_desc"]
+            })(<Input placeholder="不能为空" />)}
+          </FormItem>
+          <FormItem label="缩略图(1:1)" {...formItemLayout}>
+            {form.getFieldDecorator("img_url", {
+              rules: [
+                {
+                  required: true,
+                  
+                  validator: (rule, value, callback) => {
+                    if (value == null ) {
+                      callback("图片不能为空");
+                      return;
+                    }
+                    for (var i = 0; i < value.length; i++) {
+                      let item = value[i];
+                      if (
+                        !(
+                          item.url != null ||
+                          _.get(item, "response.data.length") > 0
+                        )
+                      ) {
+                        callback("有未成功上传的图片");
+                        return;
+                      }
+                    }
+                    callback();
+                  }
+                }
+              ],
+              // valuePropName: "fileList",
               initialValue: this.row.img_url
+              // getValueFromEvent: e => {
+              //   console.log('e');
+              //   console.log(e)
+              //   let array = [];
+              //   if (Array.isArray(e)) {
+              //     array = e;
+              //   } else {
+              //     array = e.fileList;
+              //   }
+              //   array = array.filter(item => {
+              //     return item.uid;
+              //   });
+              //   return array;
+              // }
             })(
               <Upload
+                action={uploadImgUrl}
                 listType="picture-card"
                 className="avatar-uploader"
-                showUploadList={false}
                 beforeUpload={beforeUpload}
+                showUploadList={false}
+                onChange={this.handleUploadChange.bind(this, this.row)}
                 onPreview={file => {
                   var html = `<html><body>
-                          <img width="100%" src="${file.goodsImg}" />
+                          <img width="100%" src="${file.goods_name}" />
                         </body></html>`;
                   let a = window.open();
                   a.document.write(html);
-                  // onChange={this.handleChange.bind(this, column, this.row)}
                 }}
               >
                 {this.row.img_url ? (
@@ -213,28 +276,48 @@ class MyModal extends React.Component {
                   />
                 ) : (
                   <div>
-                    <Icon type="plus" />
-                    <div className="ant-upload-text">上传</div>
+                    <Icon type={this.addImageLoading ? 'loading' : 'plus'}/>
+                    <div className="ant-upload-text" >上传</div>
                   </div>
                 )}
               </Upload>
             )}
           </FormItem>
-          <FormItem label="状态" {...formItemLayout}>
-            {form.getFieldDecorator("themes_id", {
+          <FormItem label="所属主题" {...formItemLayout}>
+            {form.getFieldDecorator("theme", {
               rules: [
                 {
                   required: true,
                   message: "不能为空"
                 }
               ],
-              initialValue: this.row["themes_id"]
+              initialValue: (function() {
+                let arr = [];
+                let themeList = _.get(that.row, "theme");
+                if (themeList) {
+                  themeList.map(item => {
+                    arr.push(item.id);
+                  });
+                }
+                return arr || [];
+              })(),
+              getValueFromEvent: e => {
+                let array = [];
+                if (Array.isArray(e)) {
+                  array = e;
+                  let crray = array.map(Number);
+                  array = [...new Set(crray)];
+                } else {
+                  array = [];
+                }
+                return array;
+              }
             })(
               <Select
                 mode="multiple"
                 style={{ width: "100%" }}
-                placeholder="Please select"
-                defaultValue={["主题二", "主题三", "主题一"]}
+                placeholder="请选择主题名称"
+                key={Math.random()}
               >
                 {children}
               </Select>
@@ -251,8 +334,12 @@ class MyModal extends React.Component {
               initialValue: this.row["status"]
             })(
               <Select>
-                <Select.Option value="UP">显示中</Select.Option>
-                <Select.Option value="DOWN">已下架</Select.Option>
+                <Select.Option value="UP" key={Math.random()}>
+                  上架
+                </Select.Option>
+                <Select.Option value="DOWN" key={Math.random()}>
+                  下架
+                </Select.Option>
               </Select>
             )}
           </FormItem>
@@ -273,6 +360,7 @@ class MyTable extends React.Component {
   @observable editWindowVisible = false; // 是否打开编辑行窗口
   @observable dataSource = []; // 表体
   @observable columns = []; // 表头
+  @observable themesList = [];
   @observable
   pagination = {
     showSizeChanger: true,
@@ -305,7 +393,7 @@ class MyTable extends React.Component {
       } else {
         this.tableHeight = this.refs.myTable.offsetHeight - 100;
       }
-    }, 0);
+    }, 500);
   }
 
   handleRowEdit(index) {
@@ -409,40 +497,17 @@ class MyTable extends React.Component {
       },
       {
         title: "所属主题",
-        dataIndex: "theme_id",
-        key: "theme_id",
+        dataIndex: "theme",
+        key: "theme",
         align: "center",
         width: 120,
-        editWindow: {
-          customRender: (form, row, column) => {
-            var Option = Select.Option;
-            var children = [];
-            for (let i = 10; i < 36; i++) {
-              children.push(
-                <Option key={i.toString(36) + i}>{i.toString(36) + i}</Option>
-              );
-            }
-            // 自定义渲染，如果不需要验证，也可以直接返回组件，但是需要自行改变row里面此字段的值
-            // row 是行信息,form是表单对象，column是列信息
-            return form.getFieldDecorator(column.key, {
-              rules: [
-                {
-                  required: true,
-                  message: "不能为空"
-                }
-              ],
-              initialValue: row[column.key]
-            })(
-              <Select
-                mode="multiple"
-                style={{ width: "100%" }}
-                placeholder="Please select"
-                defaultValue={["主题二", "主题三", "主题一"]}
-              >
-                {children}
-              </Select>
-            );
-          }
+        render: (text, row, index) => {
+          let str = "";
+          row.theme.map(item => {
+            str += item.theme_name + "、";
+          });
+          str = str.substring(0, str.length - 1);
+          return <span>{str}</span>;
         }
       },
       {
@@ -456,10 +521,10 @@ class MyTable extends React.Component {
           let relText = "";
           switch (text) {
             case "UP":
-              relText = "显示中";
+              relText = "上架";
               break;
             case "DOWN":
-              relText = "已下架";
+              relText = "下架";
               break;
           }
           return (
@@ -503,12 +568,6 @@ class MyTable extends React.Component {
               >
                 编辑
               </span>
-              <span
-                style={{ color: "#1890ff", cursor: "pointer" }}
-                onClick={this.handleRowDelete.bind(this, index)}
-              >
-                删除
-              </span>
             </div>
           );
         }
@@ -531,7 +590,11 @@ class MyTable extends React.Component {
     let data = await tool.requestAjaxSync(getUrl, "post", {
       getTableDataParams: params
     });
+    let rel = await tool.requestAjaxSync(getThems, "get", {});
+    this.themesList = _.clone(rel.data);
     data = data.data;
+    console.log("data");
+    console.log(data);
     this.dataSource = data.datas.map(item => {
       return {
         key: item.id,
@@ -652,9 +715,6 @@ class MyTable extends React.Component {
               <Button type="primary" onClick={this.addRow.bind(this)}>
                 增加
               </Button>
-              <Button type="danger" onClick={this.handleRowsDelete.bind(this)}>
-                删除
-              </Button>
             </React.Fragment>
           ) : (
             ""
@@ -664,15 +724,6 @@ class MyTable extends React.Component {
           bordered
           className="table"
           scroll={{ x: tableX, y: this.tableHeight }}
-          rowSelection={
-            this.props.mode == "edit"
-              ? {
-                  onChange: (selectedRowKeys, selectedRows) => {
-                    this.nowSelectedRows = selectedRows;
-                  }
-                }
-              : null
-          }
           loading={this.loading}
           dataSource={this.dataSource}
           columns={this.columns}
@@ -695,6 +746,7 @@ class MyTable extends React.Component {
               this.editingRowIndex = -1;
             }}
             columns={this.columns}
+            themesList={this.themesList}
           />
         ) : (
           ""

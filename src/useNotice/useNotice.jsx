@@ -1,37 +1,37 @@
 import React from "react";
-import { observable } from "mobx";
+import { observable, when } from "mobx";
 import { observer, inject } from "mobx-react";
 import { Button, message } from "antd";
 import MyRichText from "../components/myRichText/myRichText.jsx";
 import tool from "../tools/tool.js";
 
-import "./userNotice.css";
+import "./useNotice.css";
 
 @inject("myGlobal")
 @observer
 class UseNotice extends React.Component {
-  componentWillMount() {
+  @observable richText = null;
+
+  componentDidMount() {
     (async () => {
-      let data = await tool.requestAjaxSync(
-        this.props.myGlobal.mockUrl + "/userNotice/getData",
-        "get"
-      );
+      let data = await tool.requestAjaxSync("/api/notice/userNotice/getData", "get");
       data = data.data;
-      this.refs.richText.setHtml(data.data);
+      await when(() => this.richText != null);
+      this.richText.setHtml(data.data);
     })();
   }
 
   render() {
     return (
-      <div className="userNotice">
+      <div className="useNotice">
         <h2>使用须知</h2>
-        <MyRichText defaultValue="加载中..." ref="richText" />
+        <MyRichText defaultValue="加载中..." ref={e => (this.richText = e)} />
         <Button
           type="primary"
           onClick={async () => {
-            let content = this.refs.richText.getHtml();
+            let content = this.richText.getHtml();
             let rel = await tool.requestAjaxSync(
-              this.props.myGlobal.mockUrl + "/userNotice/updateData",
+              "/api/notice/userNotice/updateData",
               "post",
               {
                 content

@@ -22,12 +22,12 @@ const { RangePicker } = DatePicker;
 const FormItem = Form.Item;
 
 let publicUrl = "https://sp.tkfun.site/mock/14";
-publicUrl = "http://93.179.103.52:5000";
+publicUrl = "/api";
 let addUrl = publicUrl + "/theme/addData"; // 新增数据接口地址
 let updateUrl = publicUrl + "/theme/updateData";
 let deleteUrl = publicUrl + "/theme/deleteData";
 let getUrl = publicUrl + "/theme/getData";
-let uploadImgUrl = "http://93.179.103.52:1001/images/uploadImg";
+let uploadImgUrl = "/uploadImgApi/images/uploadImg";
 
 /**
  * 获取图片的base64地址
@@ -181,12 +181,30 @@ class MyModal extends React.Component {
               initialValue: this.row["theme_name"]
             })(<Input placeholder="不能为空" />)}
           </FormItem>
-          <FormItem label="缩略图" {...formItemLayout}>
+          <FormItem label="缩略图(2:1)" {...formItemLayout}>
             {form.getFieldDecorator("img_url_list", {
               rules: [
                 {
                   required: true,
-                  message: "不能为空"
+                  validator: (rule, value, callback) => {
+                    if (value == null || value.length <= 0) {
+                      callback("必须成功上传至少一张图片");
+                      return;
+                    }
+                    for (var i = 0; i < value.length; i++) {
+                      let item = value[i];
+                      if (
+                        !(
+                          item.url != null ||
+                          _.get(item, "response.data.length") > 0
+                        )
+                      ) {
+                        callback("有未成功上传的图片");
+                        return;
+                      }
+                    }
+                    callback();
+                  }
                 }
               ],
               valuePropName: "fileList",
@@ -453,7 +471,7 @@ class MyTable extends React.Component {
                 编辑
               </span>
               <span
-                style={{ color: "#1890ff", cursor: "pointer" }}
+                style={{ color: "#1890ff", cursor: "pointer", display: "none" }}
                 onClick={this.handleRowDelete.bind(this, index)}
               >
                 删除
@@ -601,7 +619,11 @@ class MyTable extends React.Component {
               <Button type="primary" onClick={this.addRow.bind(this)}>
                 增加
               </Button>
-              <Button type="danger" onClick={this.handleRowsDelete.bind(this)}>
+              <Button
+                type="danger"
+                style={{ display: "none" }}
+                onClick={this.handleRowsDelete.bind(this)}
+              >
                 删除
               </Button>
             </React.Fragment>

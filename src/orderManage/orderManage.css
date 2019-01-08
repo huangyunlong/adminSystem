@@ -23,6 +23,12 @@
                     -ms-border-radius: 50%;
                     -o-border-radius: 50%;
                 }
+                .ant-table-row {
+                    td {
+                        word-break: break-all;
+                    }
+                }
+
             }
         }
     }

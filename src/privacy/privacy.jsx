@@ -1,5 +1,5 @@
 import React from "react";
-import { observable } from "mobx";
+import { observable, when } from "mobx";
 import { observer, inject } from "mobx-react";
 import { Button, message } from "antd";
 import MyRichText from "../components/myRichText/myRichText.jsx";
@@ -10,14 +10,14 @@ import "./privacy.css";
 @inject("myGlobal")
 @observer
 class Privacy extends React.Component {
-  componentWillMount() {
+  @observable richText = null;
+
+  componentDidMount() {
     (async () => {
-      let data = await tool.requestAjaxSync(
-        this.props.myGlobal.mockUrl + "/privacy/getData",
-        "get"
-      );
+      let data = await tool.requestAjaxSync("/api/notice/privacy/getData", "get");
       data = data.data;
-      this.refs.richText.setHtml(data.data);
+      await when(() => this.richText != null);
+      this.richText.setHtml(data.data);
     })();
   }
 
@@ -25,14 +25,14 @@ class Privacy extends React.Component {
     return (
       <div className="privacy">
         <h2>隐私权条款</h2>
-        <MyRichText defaultValue="加载中..." ref="richText" />
+        <MyRichText defaultValue="加载中..." ref={e => (this.richText = e)} />
         <Button
           type="primary"
           onClick={async () => {
-            let content = this.refs.richText.getHtml();
+            let content = this.richText.getHtml();
             console.log(content);
             let rel = await tool.requestAjaxSync(
-              this.props.myGlobal.mockUrl + "/privacy/updateData",
+              "/api/notice/privacy/updateData",
               "post",
               {
                 content

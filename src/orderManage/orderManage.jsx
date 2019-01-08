@@ -9,9 +9,9 @@ import "./orderManage.css";
 import tool from "../tools/tool.js";
 const { RangePicker } = DatePicker;
 let publicUrl = "https://sp.tkfun.site/mock/14";
-publicUrl = "http://93.179.103.52:5000";
-let getUrl = publicUrl + "/order/getData";
-let getDetail = "http://93.179.103.52:5000/order_dtl/getOrderDtl";
+publicUrl = "/api";
+let getUrl = publicUrl + "/order1/getData";
+let getDetail = publicUrl+"/order_dtl/getOrderDtl";
 @observer
 class OrderManage extends React.Component {
   @observable tableHeight = 0; // 表格高度
@@ -19,6 +19,7 @@ class OrderManage extends React.Component {
   @observable columns = []; // 表头
   @observable modalIsShow = false;
   @observable goodsDetailList = [];
+  @observable tableX = "100%";
   @observable
   pagination = {
     showSizeChanger: true,
@@ -40,7 +41,8 @@ class OrderManage extends React.Component {
         key: "order_no",
         width: "16%",
         align: "center",
-        sorter: true // 是否可排序
+        sorter: true, // 是否可排序
+        filterType: "string"
       },
       {
         title: "用户名",
@@ -55,23 +57,25 @@ class OrderManage extends React.Component {
         key: "goodsDetail",
         align: "center",
         width: "12%",
-        render: (text, record) => (
-          <a
-            href="javascript:;"
-            key = {record.id}
-            onClick={this.goodsDetailClick.bind(this, text, record)}
-          >
-            点击获取详情
-          </a>
-        )
+        render: (text, row, index) => {
+          return (
+            <a
+              href="javascript:;"
+              key={row.id}
+              onClick={this.goodsDetailClick.bind(this, text, row)}
+            >
+              点击获取详情
+            </a>
+          );
+        }
       },
-      {
-        title: "数量",
-        dataIndex: "count",
-        key: "count",
-        width: "10%",
-        align: "center"
-      },
+      // {
+      //   title: "数量",
+      //   dataIndex: "count",
+      //   key: "count",
+      //   width: "10%",
+      //   align: "center"
+      // },
       {
         title: "合计价格",
         dataIndex: "order_money",
@@ -99,7 +103,11 @@ class OrderManage extends React.Component {
         dataIndex: "order_status",
         key: "order_status",
         width: "12%",
-        align: "center"
+        align: "center",
+        render: (text, row) => {
+          let content = text == "CREATE" ? "已付款" : "未付款";
+          return <span>{content}</span>;
+        }
       }
     ];
     this.columns.forEach(item => {
@@ -151,6 +159,11 @@ class OrderManage extends React.Component {
   }
   initTable() {
     this.defineColumns();
+    this.tableX = 0;
+    this.columns.forEach(item => {
+      this.tableX += item.width || 100;
+    });
+    this.tableX += 100;
     this.fetchDataSource({
       pageSize: 10,
       page: 1
@@ -166,6 +179,11 @@ class OrderManage extends React.Component {
   }
   async onhandleTableChange(pagination, filters, sorter) {
     this.pagination = _.merge(this.pagination, pagination);
+    _.find(filters, (item, key) => {
+      if (Array.isArray(item[0])) {
+        filters[key] = [...item[0]];
+      }
+    });
     await this.fetchDataSource({
       pageSize: pagination.pageSize,
       page: pagination.current,
@@ -176,21 +194,23 @@ class OrderManage extends React.Component {
   }
   // 点击订单号
   async goodsDetailClick(text, record) {
-    
-    console.log("record");
-    console.log(record.order_no);
-    let data = await tool.requestAjaxSync(`${getDetail}/201901030000037001`, "get", {});
-    console.log("data");
-    console.log(data.data);
-    this.goodsDetailList = data.data.goodsList;
-    this.goodsDetailList = data.data.goodsList.map(item => {
-      return {
-        key: item.goodsId,
-        ...item
-      };
-    });
+    let orderNumber = record.order_no;
+    let data = await tool.requestAjaxSync(
+      `${getDetail}/${orderNumber}`,
+      "get",
+      {}
+    );
+    if (Array.isArray(data.data)) {
+      this.goodsDetailList = data.data.map(item => {
+        return {
+          key: item.goods_id,
+          ...item
+        };
+      });
+    }else{
+      this.goodsDetailList = [];
+    }
     this.modalIsShow = true;
-    // console.log(this.goodsDetailList)
   }
   // modal取消框
   handleGoodsDetailCancel() {
@@ -270,6 +290,7 @@ class OrderManage extends React.Component {
     }
   });
   render() {
+    let tableX = this.tableX;
     return (
       <div className="orderManage" ref="orderManage">
         <h2>订单管理</h2>
@@ -277,7 +298,7 @@ class OrderManage extends React.Component {
           <div className="orderManage_tableContent">
             <Table
               className="table"
-              scroll={{ y: this.tableHeight }}
+              scroll={{x:tableX, y: this.tableHeight }}
               bordered
               columns={this.columns}
               dataSource={this.dataSource}
@@ -293,9 +314,11 @@ class OrderManage extends React.Component {
             >
               {this.goodsDetailList.map(item => {
                 return (
-                    <p>
-                      {item}
-                    </p>
+                  <div className="goodsDetailDesc" key={item.key}>
+                    <p>商品名称：{item.goods_name}</p>
+                    <p>商品价格：{item.unit_price}</p>
+                    <p>商品数量：{item.goods_num}</p>
+                  </div>
                 );
               })}
             </Modal>

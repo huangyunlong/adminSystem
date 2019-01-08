@@ -36,6 +36,12 @@
         opacity: 0.5;
       }
 
+      .ant-table-row{
+        td{
+          word-break: break-all;
+        }
+      }
+
       .custom-filter-dropdown-string {
         padding: 8px;
         border-radius: 4px;

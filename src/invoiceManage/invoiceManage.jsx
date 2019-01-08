@@ -10,7 +10,7 @@ import tool from "../tools/tool.js";
 import "./invoiceManage.css";
 const { RangePicker } = DatePicker;
 let publicUrl = "https://sp.tkfun.site/mock/14";
-publicUrl = "http://93.179.103.52:5000";
+publicUrl = "/api";
 let getUrl = publicUrl + "/invoice/getData";
 @observer
 class InvoiceManage extends React.Component {
@@ -47,7 +47,7 @@ class InvoiceManage extends React.Component {
         title: "发票类型",
         dataIndex: "type",
         key: "type",
-        width: 80,
+        width: 100,
         align: "center",
         render: text => {
           let relText = text == "1" ? "个人" : "单位";
@@ -59,9 +59,7 @@ class InvoiceManage extends React.Component {
         dataIndex: "order_no",
         key: "order_no",
         align: "center",
-        width: 200,
-        align: "center",
-        filterType: "date" // 表示过滤字符串,string,date
+        width: 200
       },
       {
         title: "时间",
@@ -69,7 +67,6 @@ class InvoiceManage extends React.Component {
         key: "create_time",
         align: "center",
         width: 200,
-        align: "center",
         filterType: "date" // 表示过滤字符串,string,date
       },
       {
@@ -99,7 +96,7 @@ class InvoiceManage extends React.Component {
         key: "user_name",
         width: 150,
         align: "center",
-        filterType: "string" // 表示过滤字符串,string,date                
+        filterType: "string" // 表示过滤字符串,string,date
       },
       {
         title: "邮箱",
@@ -109,7 +106,7 @@ class InvoiceManage extends React.Component {
         align: "center"
       }
     ];
-        this.columns.forEach(item => {
+    this.columns.forEach(item => {
       if (item.filterType == "string") {
         _.merge(item, { ...this.getStringColumnSearchProps(item.title) });
       } else if (item.filterType == "date") {
@@ -175,6 +172,11 @@ class InvoiceManage extends React.Component {
   }
   async onhandleTableChange(pagination, filters, sorter) {
     this.pagination = _.merge(this.pagination, pagination);
+    _.find(filters, (item, key) => {
+      if (Array.isArray(item[0])) {
+        filters[key] = [...item[0]];
+      }
+    });
     await this.fetchDataSource({
       pageSize: pagination.pageSize,
       page: pagination.current,
@@ -219,7 +221,8 @@ class InvoiceManage extends React.Component {
           placeholder={`搜索 【${searchTitle}】`}
           value={selectedKeys[0]}
           onChange={e =>
-            setSelectedKeys(e.target.value ? [e.target.value] : [])}
+            setSelectedKeys(e.target.value ? [e.target.value] : [])
+          }
           onPressEnter={() => confirm()}
           style={{ width: 188, marginBottom: 8, display: "block" }}
         />
@@ -259,7 +262,7 @@ class InvoiceManage extends React.Component {
           <div className="invoiceManage_tableContent">
             <Table
               className="table"
-              scroll={{x: tableX, y: this.tableHeight }}
+              scroll={{ x: tableX, y: this.tableHeight }}
               bordered
               columns={this.columns}
               dataSource={this.dataSource}
@@ -274,72 +277,3 @@ class InvoiceManage extends React.Component {
   }
 }
 export default InvoiceManage;
-
-// columns: [
-//   {
-//     title: "编号",
-//     dataIndex: "number",
-//     width: 200,
-//     align: "center",
-//     render: (text, row, index) => {
-//         return <span>{index+1}</span>
-//       }
-//   },
-//     {
-//     title: "发票类型",
-//     dataIndex: "invoiceType",
-//     width: 150,
-//     align: "center"
-//   },
-//   {
-//     title: "订单号",
-//     dataIndex: "orderNumber",
-//     align: "center",
-//     width: 150,
-//     align: "center"
-//   },
-//   {
-//     title: "抬头",
-//     dataIndex: "lookUp",
-//     width: 150,
-//     align: "center"
-//   },
-//   {
-//     title: "税号",
-//     dataIndex: "ein",
-//     width: 150,
-//     align: "center"
-//   },
-//   {
-//     title: "电话号码",
-//     dataIndex: "phoneNumber",
-//     width: 150,
-//     align: "center"
-//   },
-//   {
-//     title: "姓名",
-//     dataIndex: "userName",
-//     width: 150,
-//     align: "center"
-//   },{
-//     title: '邮箱',
-//     dataIndex: "email",
-//     width: 150,
-//     align: "center"
-//   }
-// ],
-// data: Mock.mock({
-//   "list|10-100": [
-//     {
-//       "key|+1": 0,
-//       'invoiceType|1': ["单位","个人"],
-//       orderNumber: "@id(5)",
-//       invoiceName: "@cname",
-//       lookUp:'@cname',
-//       ein:'@integer(1,100)',
-//       phoneNumber: "@id",
-//       email: "@email",
-//       userName:'@cname'
-//     }
-//   ]
-// }).list

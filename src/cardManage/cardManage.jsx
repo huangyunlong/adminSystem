@@ -228,16 +228,3 @@ class CardManage extends React.Component {
   }
 }
 export default CardManage;
-    // data: Mock.mock({
-    //   "list|10-100": [
-    //     {
-    //       "key|+1": 0,
-    //       orderNumber: "@id(5)",
-    //       cardNumber: "@id(5)",
-    //       cardDesc: "@ctitle",
-    //       allPrice: "@integer(200,1000)",
-    //       useTime: '@datetime("yyyy-MM-dd HH:mm:ss")',
-    //       "status|1": ['已付款','已使用']
-    //     }
-    //   ]
-    // }).list

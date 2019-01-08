@@ -4,20 +4,29 @@ import { observable } from "mobx";
 import { Menu, Layout, Icon } from "antd";
 import { renderRoutes } from "react-router-config";
 import { Link } from "react-router-dom";
+import { Redirect } from "react-router";
+import tool from "../tools/tool.js";
 import "./home.css";
+import { userInfo } from "os";
 
 const SubMenu = Menu.SubMenu;
 const { Header, Sider, Content } = Layout;
 
 @observer
 class Home extends React.Component {
+  @observable userInfo = {};
   @observable states = {
     current: "",
     openKey: ""
   };
 
   componentWillMount() {
-    let curentRoute = this.props.location.pathname.split("/")[1]; //获取当前的路由
+    let userName = tool.getCookie("userName");
+    this.userInfo.userName = userName;
+    if (!userName) {
+      this.logout();
+    }
+    let curentRoute = this.props.location.pathname.split("/")[2]; //获取当前的路由
     this.states.current = curentRoute;
     if (
       curentRoute == "useNotice" ||
@@ -36,69 +45,96 @@ class Home extends React.Component {
       this.states.openKey = "sub2";
     } else if (curentRoute == "accountManage") {
       this.states.openKey = "sub3";
+    } else if (curentRoute == "useCard") {
+      this.states.openKey = "sub0";
     }
   }
   menuhandleClick = e => {
     this.states.current = e.key;
   };
-
+  logout() {
+    this.props.history.replace('/login');
+    tool.delCookie("userName");
+  }
   render() {
     return (
       <Layout className="home">
         <Sider style={{ height: "100%", overflow: "auto" }}>
           <div className="logo">XXX ADMIN SYSTEM</div>
-          <Menu
-            theme="dark"
-            mode="inline"
-            onClick={this.menuhandleClick}
-            selectedKeys={[this.states.current]}
-            defaultOpenKeys={[this.states.openKey]}
-          >
-            <SubMenu title="平台信息" key="sub1">
-              <Menu.Item key="useNotice">
-                <Link to="/useNotice">使用须知</Link>
-              </Menu.Item>
-              <Menu.Item key="privacy">
-                <Link to="/privacy">隐私权条款</Link>
-              </Menu.Item>
-              <Menu.Item key="invoice">
-                <Link to="/invoice">发票规定</Link>
-              </Menu.Item>
-            </SubMenu>
-            <SubMenu title="管理" key="sub2">
-              <Menu.Item key="userManage">
-                <Link to="/userManage">用户管理</Link>
-              </Menu.Item>
-              <Menu.Item key="themeManage">
-                <Link to="/themeManage">主题管理</Link>
-              </Menu.Item>
-              <Menu.Item key="goodsManage">
-                <Link to="/goodsManage">商品管理</Link>
-              </Menu.Item>
-              <Menu.Item key="orderManage">
-                <Link to="/orderManage">订单管理</Link>
-              </Menu.Item>
-              <Menu.Item key="invoiceManage">
-                发票管理
-                <Link to="/invoiceManage">发票管理</Link>
-              </Menu.Item>
-              <Menu.Item key="cardManage">
-                <Link to="/cardManage">卡券管理</Link>
-              </Menu.Item>
-            </SubMenu>
-            <SubMenu title="设置" key="sub3">
-              <Menu.Item key="userPermission">
-                <Link to="/accountManage">账户权限</Link>
-              </Menu.Item>
-            </SubMenu>
-          </Menu>
+          {this.userInfo.userName == "admin" ? (
+            <Menu
+              theme="dark"
+              mode="inline"
+              onClick={this.menuhandleClick}
+              selectedKeys={[this.states.current]}
+              defaultOpenKeys={[this.states.openKey]}
+            >
+              <SubMenu title="卡券核销" key="sub0">
+                <Menu.Item key="useCard">
+                  <Link to="/home/useCard">使用卡券</Link>
+                </Menu.Item>
+              </SubMenu>
+              <SubMenu title="平台信息" key="sub1">
+                <Menu.Item key="useNotice">
+                  <Link to="/home/useNotice">使用须知</Link>
+                </Menu.Item>
+                <Menu.Item key="privacy">
+                  <Link to="/home/privacy">隐私权条款</Link>
+                </Menu.Item>
+                <Menu.Item key="invoice">
+                  <Link to="/home/invoice">发票规定</Link>
+                </Menu.Item>
+              </SubMenu>
+              <SubMenu title="管理" key="sub2">
+                <Menu.Item key="userManage">
+                  <Link to="/home/userManage">用户管理</Link>
+                </Menu.Item>
+                <Menu.Item key="themeManage">
+                  <Link to="/home/themeManage">主题管理</Link>
+                </Menu.Item>
+                <Menu.Item key="goodsManage">
+                  <Link to="/home/goodsManage">商品管理</Link>
+                </Menu.Item>
+                <Menu.Item key="orderManage">
+                  <Link to="/home/orderManage">订单管理</Link>
+                </Menu.Item>
+                <Menu.Item key="invoiceManage">
+                  发票管理
+                  <Link to="/home/invoiceManage">发票管理</Link>
+                </Menu.Item>
+              </SubMenu>
+              <SubMenu title="设置" key="sub3">
+                <Menu.Item key="userPermission">
+                  <Link to="/home/accountManage">账户权限</Link>
+                </Menu.Item>
+              </SubMenu>
+            </Menu>
+          ) : (
+            <Menu
+              theme="dark"
+              mode="inline"
+              onClick={this.menuhandleClick}
+              selectedKeys={[this.states.current]}
+              defaultOpenKeys={[this.states.openKey]}
+            >
+              <SubMenu title="卡券核销" key="sub0">
+                <Menu.Item key="useCard">
+                  <Link to="/home/useCard">使用卡券</Link>
+                </Menu.Item>
+              </SubMenu>
+            </Menu>
+          )}
         </Sider>
         <Layout>
           <Header className="header" style={{ background: "#fff", padding: 0 }}>
-            <div className="logout">
+            <div
+              className="logout"
+              style={{ cursor: "pointer" }}
+              onClick={this.logout.bind(this)}
+            >
               <Icon type="logout" />
             </div>
-            <div className="userName">admin</div>
+            <div className="userName">{this.userInfo.userName}</div>
           </Header>
           <Content ref="content" className="content">
             {renderRoutes(this.props.route.childs)}

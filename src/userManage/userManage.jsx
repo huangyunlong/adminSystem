@@ -10,7 +10,7 @@ import tool from "../tools/tool.js";
 import "./userManage.css";
 const { RangePicker } = DatePicker;
 let publicUrl = "https://sp.tkfun.site/mock/14";
-publicUrl = "http://93.179.103.52:5000";
+publicUrl = "/api";
 let getUrl = publicUrl + "/member/getData";
 @observer
 class UserManage extends React.Component {
@@ -32,7 +32,7 @@ class UserManage extends React.Component {
   @observable loading = true;
   @observable lastRequestTableParams = {};
   // 表头设计
- defineColumns(){
+  defineColumns() {
     this.columns = [
       {
         title: "用户头像",
@@ -41,18 +41,11 @@ class UserManage extends React.Component {
         align: "center",
         width: 150,
         render: (text, row, index) => {
+          let imgUrl = row.photo;
           return (
-            <img
-              onClick={() => {
-                var html = `<html><body>
-      <img width="100%" src="${row.photo}" />
-    </body></html>`;
-                let a = window.open();
-                a.document.write(html);
-              }}
-              className="userImage"
-              src={row.photo}
-            />
+            <a href={imgUrl} target="__blank">
+              <img className="userImage" src={imgUrl} />
+            </a>
           );
         }
       },
@@ -62,44 +55,34 @@ class UserManage extends React.Component {
         key: "nick_name",
         width: 100,
         align: "center",
-        filterType:"string"
+        filterType: "string"
       },
-      {
-        title: "用户名",
-        dataIndex: "userName",
-        key: "userName",        
-        width: 100,
-        align: "center",
-      },
+      // {
+      //   title: "用户名",
+      //   dataIndex: "userName",
+      //   key: "userName",
+      //   width: 100,
+      //   align: "center",
+      // },
       {
         title: "性别",
         dataIndex: "gender",
-        key: "gender",        
+        key: "gender",
         align: "center",
         width: 150,
-        align: "center",
-        render:(text,row)=>{
-          let sex = row.gender==1?"男":"女"
-          return (
-            <span>{sex}</span>
-          )
+        render: (text, row) => {
+          let sex = row.gender == 1 ? "男" : "女";
+          return <span>{sex}</span>;
         }
-      },
-      {
-        title: "手机号",
-        dataIndex: "mobile",
-        key: "mobile",        
-        width: 150,
-        align: "center"
       },
       {
         title: "注册时间",
         dataIndex: "register_time",
-        key: "register_time",        
+        key: "register_time",
         width: 150,
         align: "center"
       }
-    ]
+    ];
     this.columns.forEach(item => {
       if (item.filterType == "string") {
         _.merge(item, { ...this.getStringColumnSearchProps(item.title) });
@@ -113,8 +96,8 @@ class UserManage extends React.Component {
     let data = await tool.requestAjaxSync(getUrl, "POST", {
       getTableDataParams: params
     });
-    console.log('data');
-    console.log(data)
+    console.log("data");
+    console.log(data);
     this.loading = false;
     console.log("data");
     console.log(data);
@@ -209,7 +192,8 @@ class UserManage extends React.Component {
           placeholder={`搜索 【${searchTitle}】`}
           value={selectedKeys[0]}
           onChange={e =>
-            setSelectedKeys(e.target.value ? [e.target.value] : [])}
+            setSelectedKeys(e.target.value ? [e.target.value] : [])
+          }
           onPressEnter={() => confirm()}
           style={{ width: 188, marginBottom: 8, display: "block" }}
         />
@@ -249,7 +233,7 @@ class UserManage extends React.Component {
           <div className="userManage_tableContent">
             <Table
               className="table"
-              scroll={{x:tableX, y: this.tableHeight }}
+              scroll={{ x: tableX, y: this.tableHeight }}
               bordered
               columns={this.columns}
               dataSource={this.dataSource}
