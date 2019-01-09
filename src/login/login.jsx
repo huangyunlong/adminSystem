@@ -5,6 +5,7 @@ import { Redirect } from "react-router";
 import { Button, Input, Table, DatePicker, Form, Icon, Checkbox,message} from "antd";
 import Mock from "mockjs";
 import tool from "../tools/tool.js";
+import admin from "./admin.jpg"
 let publicUrl = "http://93.179.103.52:5000";
 publicUrl = "/api";
 let loginUrl = publicUrl + "/userLogin";
@@ -89,7 +90,7 @@ class Login extends React.Component {
       <div className="login" ref="login">
         <div className="top">
           <div className="avatar">
-            <img src="https://ss0.bdstatic.com/94oJfD_bAAcT8t7mm9GUKT-xh_/timg?image&quality=100&size=b4000_4000&sec=1545224240&di=430a80584b56d9db0c393e52aa3a4a80&src=http://pic43.photophoto.cn/20170506/0470102348231008_b.jpg" />
+            <img src={admin} />
           </div>
           <div className="title">浪漫斯基管理平台</div>
         </div>

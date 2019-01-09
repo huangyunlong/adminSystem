@@ -69,6 +69,8 @@ class MyModal extends React.Component {
   @observable imgList = []; // 图片列表,里面对象格式参见 https://ant.design/components/upload-cn/#onChange
   @observable addImageLoading = false;
   @observable editImageLoading = false;
+  @observable timeDate = [];
+  @observable quantity = 0;
   componentWillMount() {
     let { editingRowIndex, relativeRow } = this.props;
     if (editingRowIndex == -1) {
@@ -101,6 +103,10 @@ class MyModal extends React.Component {
       delete newRow.theme;
       // 如果是增加模式
       if (this.addRowMode) {
+        delete newRow.dataTime;
+        newRow.limit_start_time	= this.timeDate[0]; // 卡券使用开始时间
+        newRow.limit_end_time = this.timeDate[1];// 卡券使用结束时间
+        newRow.quantity = Number(this.quantity);
         rel = await tool.requestAjaxSync(addUrl, "post", {
           addRow: newRow
         });
@@ -160,7 +166,9 @@ class MyModal extends React.Component {
     let themesList = this.props.themesList;
     for (let i = 0; i < themesList.length; i++) {
       children.push(
-        <Option key={Number(themesList[i].id)} value={Number(themesList[i].id)}>{themesList[i].theme_name}</Option>
+        <Option key={Number(themesList[i].id)} value={Number(themesList[i].id)}>
+          {themesList[i].theme_name}
+        </Option>
       );
     }
 
@@ -196,7 +204,7 @@ class MyModal extends React.Component {
                 }
               ],
               initialValue: this.row["price"]
-            })(<Input placeholder="不能为空" />)}
+            })(<Input placeholder="不能为空,单位为分" />)}
           </FormItem>
           <FormItem label="商品描述" {...formItemLayout}>
             {form.getFieldDecorator("goods_desc", {
@@ -214,23 +222,10 @@ class MyModal extends React.Component {
               rules: [
                 {
                   required: true,
-                  
                   validator: (rule, value, callback) => {
                     if (value == null ) {
                       callback("图片不能为空");
                       return;
-                    }
-                    for (var i = 0; i < value.length; i++) {
-                      let item = value[i];
-                      if (
-                        !(
-                          item.url != null ||
-                          _.get(item, "response.data.length") > 0
-                        )
-                      ) {
-                        callback("有未成功上传的图片");
-                        return;
-                      }
                     }
                     callback();
                   }
@@ -276,8 +271,8 @@ class MyModal extends React.Component {
                   />
                 ) : (
                   <div>
-                    <Icon type={this.addImageLoading ? 'loading' : 'plus'}/>
-                    <div className="ant-upload-text" >上传</div>
+                    <Icon type={this.addImageLoading ? "loading" : "plus"} />
+                    <div className="ant-upload-text">上传</div>
                   </div>
                 )}
               </Upload>
@@ -317,7 +312,6 @@ class MyModal extends React.Component {
                 mode="multiple"
                 style={{ width: "100%" }}
                 placeholder="请选择主题名称"
-                key={Math.random()}
               >
                 {children}
               </Select>
@@ -343,6 +337,54 @@ class MyModal extends React.Component {
               </Select>
             )}
           </FormItem>
+          {this.addRowMode == true ? (
+            <FormItem label="请选择使用时间段" {...formItemLayout}>
+              {form.getFieldDecorator("dataTime", {
+                rules: [
+                  {
+                    required: true,
+                    message: "用户信息不能为空"
+                  }
+                ],
+                initialValue: ""
+              })(
+                <RangePicker
+                  onChange={(date, dateString) => {
+                    this.timeDate = dateString;
+                  }}
+                />
+              )}
+            </FormItem>
+          ) : (
+            ""
+          )}
+          {this.addRowMode == true ? (
+            <FormItem label="请输入卡券数量" {...formItemLayout}>
+              {form.getFieldDecorator("quantity", {
+                rules: [
+                  {
+                    required: true,
+                    pattern: new RegExp(/^[1-9]\d*$/, "g"),
+                    message: "只能输入数字"
+                  }
+                ],
+                getValueFromEvent: event => {
+                  return event.target.value.replace(/\D/g, "");
+                },
+                initialValue: ""
+              })(
+                <Input
+                  placeholder="卡券数量不能为空"
+                  onChange={item => {
+                    let quantity = _.get(item, "target.value");
+                    this.quantity = quantity;
+                  }}
+                />
+              )}
+            </FormItem>
+          ) : (
+            ""
+          )}
         </Form>
       </Modal>
     );
@@ -470,7 +512,10 @@ class MyTable extends React.Component {
         filterType: "string", // 表示过滤字符串,string,date
         width: 150,
         sorter: true, // 是否可排序
-        align: "center" // 列文字排版
+        align: "center", // 列文字排版
+        render:text=>{
+          return <span>{text} 分</span>
+        }
       },
       {
         title: "缩略图",

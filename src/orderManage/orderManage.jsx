@@ -311,6 +311,8 @@ class OrderManage extends React.Component {
               title="商品详情"
               onOk={this.handleGoodDetail.bind(this)}
               onCancel={this.handleGoodsDetailCancel.bind(this)}
+              className = "oderModal"
+              width={600}
             >
               {this.goodsDetailList.map(item => {
                 return (

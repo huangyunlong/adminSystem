@@ -33,3 +33,19 @@
         }
     }
 }
+.oderModal {
+    .ant-modal-body {
+        max-height:340px;
+        overflow:scroll;
+        overflow-x:hidden;
+      .goodsDetailDesc {
+          display: flex;
+          flex-direction: row;
+          flex-wrap: nowrap;
+          justify-content: space-around;
+          p{
+              flex:1;
+          }
+      }
+    }
+  }
