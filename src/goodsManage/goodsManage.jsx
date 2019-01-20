@@ -327,7 +327,7 @@ class MyModal extends React.Component {
               ],
               initialValue: this.row["status"]
             })(
-              <Select>
+              <Select placeholder="请选择状态">
                 <Select.Option value="UP" key={Math.random()}>
                   上架
                 </Select.Option>

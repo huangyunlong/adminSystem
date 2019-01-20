@@ -30,14 +30,12 @@ class Home extends React.Component {
     this.states.current = curentRoute;
     if (
       curentRoute == "useNotice" ||
-      curentRoute == "privacy" ||
-      curentRoute == "invoice"
+      curentRoute == "privacy" 
     ) {
       this.states.openKey = "sub1";
     } else if (
       curentRoute == "userManage" ||
       curentRoute == "themeManage" ||
-      curentRoute == "invoiceManage" ||
       curentRoute == "cardManage" ||
       curentRoute == "orderManage" ||
       curentRoute == "goodsManage"
@@ -81,9 +79,6 @@ class Home extends React.Component {
                 <Menu.Item key="privacy">
                   <Link to="/home/privacy">隐私权条款</Link>
                 </Menu.Item>
-                <Menu.Item key="invoice">
-                  <Link to="/home/invoice">发票规定</Link>
-                </Menu.Item>
               </SubMenu>
               <SubMenu title="管理" key="sub2">
                 <Menu.Item key="userManage">
@@ -97,10 +92,6 @@ class Home extends React.Component {
                 </Menu.Item>
                 <Menu.Item key="orderManage">
                   <Link to="/home/orderManage">订单管理</Link>
-                </Menu.Item>
-                <Menu.Item key="invoiceManage">
-                  发票管理
-                  <Link to="/home/invoiceManage">发票管理</Link>
                 </Menu.Item>
               </SubMenu>
               <SubMenu title="设置" key="sub3">

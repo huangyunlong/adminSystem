@@ -1,11 +1,11 @@
 import Home from '../home/home.jsx';
 import UseNotice from '../useNotice/useNotice.jsx';
 import Privacy from '../privacy/privacy.jsx';
-import Invoice from '../invoice/invoice.jsx';
+// import Invoice from '../invoice/invoice.jsx';
 import userManage from '../userManage/userManage.jsx'
 import ThemeManage from '../themeManage/themeManage.jsx';
 import orderManage from '../orderManage/orderManage.jsx';
-import invoiceManage from '../invoiceManage/invoiceManage.jsx';
+// import invoiceManage from '../invoiceManage/invoiceManage.jsx';
 import cardManage from '../cardManage/cardManage.jsx';
 import goodsManage from '../goodsManage/goodsManage.jsx';
 import accountManage from '../accountManage/accountManage.jsx';
@@ -33,9 +33,6 @@ export default [{
                 path: '/home/privacy',
                 component: Privacy
             }, {
-                path: '/home/invoice',
-                component: Invoice
-            }, {
                 path: '/home/userManage', // 用户管理
                 component: userManage
             }, {
@@ -44,10 +41,7 @@ export default [{
             }, {
                 path: '/home/orderManage', // 订单管理
                 component: orderManage
-            }, {
-                path: '/home/invoiceManage', // 发票管理
-                component: invoiceManage
-            }, {
+            },{
                 path: '/home/cardManage', // 卡券管理
                 component: cardManage
             }, {
