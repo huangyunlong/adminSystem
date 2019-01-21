@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+
+<body>
+    <script>
+        
+        var weixinimgindex=0;
+        function loadweixinimg(url) {
+            weixinimgindex++;
+            window["img" + weixinimgindex] =
+                '<img id="img' +
+                weixinimgindex +
+                "\" src='" +
+                url +
+                "?" +
+                Math.random() +
+                "' onload='parent.showweixinimg(this," +
+                weixinimgindex +
+                ")' style='width: 100%; height: 100%; padding: .5rem 0;' />";
+            return (
+                '<iframe id="frameimg' +
+                weixinimgindex +
+                '" src="javascript:parent.img' +
+                weixinimgindex +
+                ';" style="display: block;"></iframe>'
+            );
+        }
+
+        function showweixinimg(ele, key) {
+            $("#frameimg" + key).replaceWith(ele);
+        }
+        let a = loadweixinimg("http://mmbiz.qpic.cn/mmbiz_jpg/Om5ZNGYtKzeWtTKdHtJX5pmumyCQdue4GBm1ZHmDZxusuIKk4KZtShgDSBFzUy5iahxmniaYCMficzF2V1XAwicD5Q/0")
+        console.log(a)
+    </script>
+</body>
+
+</html>

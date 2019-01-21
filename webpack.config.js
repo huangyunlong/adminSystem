@@ -144,10 +144,10 @@ if (mode == "development") {
         changeOrigin: true,
         secure: false, // 接受 运行在 https 上的服务
       },
-      '/api': {
-        target: 'https://sp.tkfun.site',
+      '/manage': {
+        target: 'https://sp.roseski.com/manage',
         pathRewrite: {
-          '^/api': ''
+          '^/manage': ''
         },
         changeOrigin: true,
         secure: false, // 接受 运行在 https 上的服务

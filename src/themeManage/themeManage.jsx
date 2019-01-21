@@ -7,6 +7,7 @@ import {
   Form,
   Modal,
   DatePicker,
+  Radio,
   message,
   Icon,
   Table,
@@ -20,14 +21,16 @@ import "./themeManage.css";
 const { RangePicker } = DatePicker;
 
 const FormItem = Form.Item;
+const RadioGroup = Radio.Group;
 
 let publicUrl = "https://sp.tkfun.site/mock/14";
-publicUrl = "/api";
+publicUrl = "/manage";
 let addUrl = publicUrl + "/theme/addData"; // 新增数据接口地址
 let updateUrl = publicUrl + "/theme/updateData";
 let deleteUrl = publicUrl + "/theme/deleteData";
 let getUrl = publicUrl + "/theme/getData";
-let uploadImgUrl = "/uploadImgApi/images/uploadImg";
+let uploadImgUrl = "/manage/images/uploadImg";
+let getCategoryInfo = "/manage/category/getCategoryInfo";
 
 /**
  * 获取图片的base64地址
@@ -67,6 +70,7 @@ class MyModal extends React.Component {
   @observable row = {}; // 当前编辑行对象，窗口打开时赋值
   addRowMode = false; // 是否是添加模式
   @observable imgList = []; // 图片列表,里面对象格式参见 https://ant.design/components/upload-cn/#onChange
+  @observable categoryInfo = [];
 
   componentWillMount() {
     let { editingRowIndex, relativeRow } = this.props;
@@ -75,17 +79,31 @@ class MyModal extends React.Component {
     }
     if (this.addRowMode) {
       this.row = {
-        img_url_list: []
+        theme_pic_url: null,
+        pic_item_list: []
       };
     } else {
       this.row = _.clone(relativeRow);
-      this.row.img_url_list = this.row.img_url_list.map(item => {
+      this.row.pic_item_list = this.row.pic_item_list || [];
+      this.row.pic_item_list = this.row.pic_item_list.map(item => {
         return {
           uid: Mock.Random.integer(1, 10000),
-          url: item
+          url: item.url
         };
       });
+      let obj = _.find(this.row.pic_item_list, item => {
+        return item.url == this.row.theme_pic_url;
+      });
+      if (obj) {
+        this.row.theme_pic_url = obj.uid;
+      } else {
+        this.row.theme_pic_url = null;
+      }
     }
+    tool.requestAjaxSync(getCategoryInfo, "get", {}).then(data => {
+      data = data.data;
+      this.categoryInfo = data;
+    });
   }
 
   /**
@@ -98,12 +116,25 @@ class MyModal extends React.Component {
       }
       let newRow = _.assign({}, this.row, values),
         rel = null;
-      newRow.img_url_list = newRow.img_url_list.map(item => {
+      // 处理封面列表
+      let obj = _.find(newRow.pic_item_list, item => {
+        return item.uid == newRow.theme_pic_url;
+      });
+      if (obj) {
+        newRow.theme_pic_url = obj.url || _.get(obj, "response.data[0]");
+      }
+      newRow.pic_item_list = newRow.pic_item_list.map(item => {
         return item.url || _.get(item, "response.data[0]");
       });
-      newRow.img_url_list = newRow.img_url_list.filter(item => {
+      newRow.pic_item_list = newRow.pic_item_list.filter(item => {
         return item != null;
       });
+      delete newRow["key"];
+      for (var key in newRow) {
+        if (newRow[key] == "true" || newRow[key] == "false") {
+          newRow[key] = Boolean(newRow[key]);
+        }
+      }
       // 如果是增加模式
       if (this.addRowMode) {
         rel = await tool.requestAjaxSync(addUrl, "post", {
@@ -154,14 +185,22 @@ class MyModal extends React.Component {
 
   render() {
     let formItemLayout = {
-        labelCol: { span: 4 },
-        wrapperCol: { span: 20 }
+        labelCol: { span: 7 },
+        wrapperCol: { span: 17 }
       },
       { form } = this.props;
+    let picItemList = form.getFieldValue("pic_item_list") ||
+      this.row["pic_item_list"] || [
+        {
+          uid: Math.random(),
+          url:
+            "http://www.pptbz.com/pptpic/UploadFiles_6909/201211/2012111719294197.jpg"
+        }
+      ];
     return (
       <Modal
         destroyOnClose
-        title="编辑"
+        title={this.addRowMode ? "增加" : "编辑"}
         width="70%"
         maskClosable
         centered
@@ -169,20 +208,50 @@ class MyModal extends React.Component {
         onOk={this.handleEditWindowSave.bind(this)}
         onCancel={this.handleCancelEditWindow.bind(this)}
       >
-        <Form>
-          <FormItem label="主题名称" {...formItemLayout}>
-            {form.getFieldDecorator("theme_name", {
+        <Form layout="vertical">
+          <FormItem label="主题名称">
+            {form.getFieldDecorator("title", {
               rules: [
                 {
                   required: true,
                   message: "不能为空"
                 }
               ],
-              initialValue: this.row["theme_name"]
+              initialValue: this.row["title"]
             })(<Input placeholder="不能为空" />)}
           </FormItem>
-          <FormItem label="缩略图(2:1)" {...formItemLayout}>
-            {form.getFieldDecorator("img_url_list", {
+          <FormItem label="选择卡券主题封面">
+            {form.getFieldDecorator("theme_pic_url", {
+              rules: [
+                {
+                  required: true,
+                  validator: (rule, value, callback) => {
+                    if (value == null) {
+                      callback("必须选择主题封面");
+                      return;
+                    }
+                    callback();
+                  }
+                }
+              ],
+              initialValue: this.row["theme_pic_url"]
+            })(
+              <RadioGroup>
+                {picItemList.map(item => {
+                  return (
+                    <Radio value={item.uid} key={item.uid}>
+                      <img
+                        src={item.thumbUrl}
+                        style={{ width: 100, height: 100 }}
+                      />
+                    </Radio>
+                  );
+                })}
+              </RadioGroup>
+            )}
+          </FormItem>
+          <FormItem label="主题的封面图片列表，大小控制在1000px*600px">
+            {form.getFieldDecorator("pic_item_list", {
               rules: [
                 {
                   required: true,
@@ -208,8 +277,9 @@ class MyModal extends React.Component {
                 }
               ],
               valuePropName: "fileList",
-              initialValue: this.row.img_url_list,
+              initialValue: this.row.pic_item_list,
               getValueFromEvent: e => {
+                console.log(e);
                 let array = [];
                 if (Array.isArray(e)) {
                   array = e;
@@ -236,38 +306,86 @@ class MyModal extends React.Component {
               </Upload>
             )}
           </FormItem>
-          <FormItem label="状态" {...formItemLayout}>
-            {form.getFieldDecorator("status", {
+          <FormItem label="是否显示在货架上">
+            {form.getFieldDecorator("is_show", {
               rules: [
                 {
                   required: true,
                   message: "不能为空"
                 }
               ],
-              initialValue: this.row["status"]
+              initialValue: this.row["is_show"]
             })(
               <Select>
-                <Select.Option value="UP">显示中</Select.Option>
-                <Select.Option value="DOWN">已下架</Select.Option>
+                <Select.Option value="true">是</Select.Option>
+                <Select.Option value="false">否</Select.Option>
               </Select>
             )}
           </FormItem>
-          <FormItem label="是否顶部显示" {...formItemLayout}>
-            {form.getFieldDecorator("banner_flag", {
+          <FormItem label="	是否将当前主题设置为banner主题（主推荐）">
+            {form.getFieldDecorator("is_banner", {
               rules: [
                 {
                   required: true,
                   message: "不能为空"
                 }
               ],
-              initialValue: this.row["banner_flag"]
+              initialValue: this.row["is_banner"]
             })(
               <Select>
-                <Select.Option value="TRUE">是</Select.Option>
-                <Select.Option value="FALSE">否</Select.Option>
+                <Select.Option value="true">是</Select.Option>
+                <Select.Option value="false">否</Select.Option>
               </Select>
             )}
           </FormItem>
+          <FormItem label="该主题购买页是否突出商品名显示">
+            {form.getFieldDecorator("show_sku_title_first", {
+              rules: [
+                {
+                  required: true,
+                  message: "不能为空"
+                }
+              ],
+              initialValue: this.row["show_sku_title_first"]
+            })(
+              <Select>
+                <Select.Option value="true">是</Select.Option>
+                <Select.Option value="false">否</Select.Option>
+              </Select>
+            )}
+          </FormItem>
+          <FormItem label="主题title的颜色，直接传入色值">
+            {form.getFieldDecorator("title_color", {
+              rules: [
+                {
+                  required: true,
+                  message: "不能为空"
+                }
+              ],
+              initialValue: this.row["title_color"]
+            })(<Input type="color" />)}
+          </FormItem>
+          {/* <FormItem label="主题标号，对应category_list内的title字段， 若填写了category_list则每个主题必填该序号">
+            {form.getFieldDecorator("category_index", {
+              rules: [
+                {
+                  required: true,
+                  message: "不能为空"
+                }
+              ],
+              initialValue: this.row["category_index"]
+            })(
+              <Select>
+                {this.categoryInfo.map((item, index) => {
+                  return (
+                    <Select.Option value={item.id} key={index}>
+                      {item.category_name}
+                    </Select.Option>
+                  );
+                })}
+              </Select>
+            )}
+          </FormItem> */}
         </Form>
       </Modal>
     );
@@ -304,8 +422,14 @@ class MyTable extends React.Component {
     return _.get(this.dataSource, this.editingRowIndex);
   }
 
+  @observable categoryInfo = [];
+
   componentWillMount() {
     this.initTable();
+    tool.requestAjaxSync(getCategoryInfo, "get", {}).then(data => {
+      data = data.data;
+      this.categoryInfo = data;
+    });
   }
 
   componentDidMount() {
@@ -378,64 +502,105 @@ class MyTable extends React.Component {
     this.columns = [
       {
         title: "主题名称",
-        dataIndex: "theme_name", // dataIndex 和 key 需要一致
-        key: "theme_name",
+        dataIndex: "title", // dataIndex 和 key 需要一致
+        key: "title",
         filterType: "string", // 表示过滤字符串,string,date
         width: 150,
         sorter: true, // 是否可排序
         align: "center" // 列文字排版
       },
       {
-        title: "缩略图",
-        dataIndex: "img_url_list",
-        key: "img_url_list",
+        title: "卡券主题封面",
+        dataIndex: "theme_pic_url",
+        key: "theme_pic_url",
         align: "center",
         width: 150,
         render: (text, row, index) => {
-          let imgUrl = row.img_url_list || [];
+          let imgUrl = row.theme_pic_url || "";
           return (
-            <a href={imgUrl[0]} target="__blank">
-              <img className="smallImg" src={imgUrl[0]} />
+            <a href={imgUrl} target="__blank">
+              <img className="smallImg" src={imgUrl} />
             </a>
           );
         }
       },
       {
-        title: "状态",
-        dataIndex: "status",
-        key: "status",
+        title: "是否显示在货架上",
+        dataIndex: "is_show",
+        key: "is_show",
         align: "center",
         sorter: true,
         width: 150,
         render: text => {
-          let relText = "";
-          switch (text) {
-            case "UP":
-              relText = "显示中";
-              break;
-            case "DOWN":
-              relText = "已下架";
-              break;
-          }
+          let relText = text == "true" ? "是" : "否";
           return (
-            <span style={{ color: text == "UP" ? "#237804" : "" }}>
-              {relText}
-            </span>
+            <span style={{ color: text ? "#237804" : "" }}>{relText}</span>
           );
         }
       },
       {
-        title: "是否顶部显示",
-        dataIndex: "banner_flag",
-        key: "banner_flag",
+        title: "是否将当前主题设置为banner主题（主推荐）",
+        dataIndex: "is_banner",
+        key: "is_banner",
         align: "center",
         sorter: true,
         width: 150,
         render: text => {
-          let relText = text == "TRUE" ? "是" : "否";
+          let relText = text == "true" ? "是" : "否";
           return <span>{relText}</span>;
         }
+      },
+      {
+        title: "该主题购买页是否突出商品名显示",
+        dataIndex: "show_sku_title_first",
+        key: "show_sku_title_first",
+        align: "center",
+        sorter: true,
+        width: 150,
+        render: text => {
+          let relText = text == "true" ? "是" : "否";
+          return <span>{relText}</span>;
+        }
+      },
+      {
+        title: "主题title的颜色，直接传入色值",
+        dataIndex: "title_color",
+        key: "title_color",
+        align: "center",
+        sorter: true,
+        width: 150,
+        render: text => {
+          return (
+            <div
+              style={{
+                display: "inline-block",
+                width: 30,
+                height: 30,
+                backgroundColor: text
+              }}
+            />
+          );
+        }
       }
+      // {
+      //   title:
+      //     "主题标号，对应category_list内的title字段， 若填写了category_list则每个主题必填该序号",
+      //   dataIndex: "category_index",
+      //   key: "category_index",
+      //   align: "center",
+      //   sorter: true,
+      //   width: 150,
+      //   render: text => {
+      //     let obj = _.find(this.categoryInfo, item => {
+      //       return item.id == text;
+      //     });
+      //     if (obj) {
+      //       return <span>{obj.category_name}</span>;
+      //     } else {
+      //       return <span />;
+      //     }
+      //   }
+      // }
     ];
 
     this.columns.forEach(item => {
@@ -500,6 +665,11 @@ class MyTable extends React.Component {
     });
     data = data.data;
     this.dataSource = data.datas.map(item => {
+      for (var key in item) {
+        if (typeof item[key] == "boolean") {
+          item[key] = item[key].toString();
+        }
+      }
       return {
         key: item.id,
         ...item

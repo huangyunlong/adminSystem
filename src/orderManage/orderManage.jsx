@@ -9,10 +9,9 @@ import "./orderManage.css";
 import tool from "../tools/tool.js";
 const { RangePicker } = DatePicker;
 let publicUrl = "https://sp.tkfun.site/mock/14";
-publicUrl = "/api";
-publicUrl = "https://sp.roseski.com/manage";
+publicUrl = "/manage";
 let getUrl = publicUrl + "/order/getData";
-let getDetail = publicUrl + "/order_dtl/getOrderDtl";
+let getDetail = publicUrl+"/order_dtl/getOrderDtl";
 @observer
 class OrderManage extends React.Component {
   @observable tableHeight = 0; // 表格高度
@@ -62,7 +61,7 @@ class OrderManage extends React.Component {
           return (
             <a
               href="javascript:;"
-              key={row.id}
+              key={row.key}
               onClick={this.goodsDetailClick.bind(this, text, row)}
             >
               点击获取详情
@@ -82,7 +81,10 @@ class OrderManage extends React.Component {
         dataIndex: "total_price",
         key: "total_price",
         width: "12%",
-        align: "center"
+        align: "center",
+        render:(text)=>{
+          return <span>{text/100}元</span>
+        }
       },
       // {
       //   title: "实付金额",
@@ -100,7 +102,7 @@ class OrderManage extends React.Component {
         filterType: "date",
         render:(text)=>{
           text = Number(text)
-          return <span>{tool.dateToString(new Date(text),'yyyy-MM-dd hh:mm:ss')}</span>
+          return <span>{tool.dateToString(new Date(text*1000),'yyyy-MM-dd HH:mm:ss')}</span>
         }
       },
       {
@@ -110,8 +112,8 @@ class OrderManage extends React.Component {
         width: "12%",
         align: "center",
         render: (text, row) => {
-          let content = text == false ? "未付款" : "已付款";
-          return <span>{content}</span>;
+          let content = "已付款";
+          return <span>已付款</span>;
         }
       }
     ];
@@ -205,8 +207,6 @@ class OrderManage extends React.Component {
       "get",
       {}
     );
-    console.log("详情");
-    console.log(data);
     if (Array.isArray(data.data)) {
       this.goodsDetailList = data.data.map(item => {
         return {
@@ -214,7 +214,7 @@ class OrderManage extends React.Component {
           ...item
         };
       });
-    } else {
+    }else{
       this.goodsDetailList = [];
     }
     this.modalIsShow = true;
@@ -264,7 +264,8 @@ class OrderManage extends React.Component {
           placeholder={`搜索 【${searchTitle}】`}
           value={selectedKeys[0]}
           onChange={e =>
-            setSelectedKeys(e.target.value ? [e.target.value] : [])}
+            setSelectedKeys(e.target.value ? [e.target.value] : [])
+          }
           onPressEnter={() => confirm()}
           style={{ width: 188, marginBottom: 8, display: "block" }}
         />
@@ -304,7 +305,7 @@ class OrderManage extends React.Component {
           <div className="orderManage_tableContent">
             <Table
               className="table"
-              scroll={{ x: tableX, y: this.tableHeight }}
+              scroll={{x:tableX, y: this.tableHeight }}
               bordered
               columns={this.columns}
               dataSource={this.dataSource}
@@ -317,7 +318,7 @@ class OrderManage extends React.Component {
               title="商品详情"
               onOk={this.handleGoodDetail.bind(this)}
               onCancel={this.handleGoodsDetailCancel.bind(this)}
-              className="oderModal"
+              className = "oderModal"
               width={600}
             >
               {this.goodsDetailList.map(item => {
@@ -329,7 +330,7 @@ class OrderManage extends React.Component {
                         <img className="orderImage" src={item.background_pic_url} />
                       </a>
                     </p>
-                    <p>商品价格：{item.price}</p>
+                    <p>商品价格：{item.price/100}元</p>
                     {/*<p>商品数量：{item.goods_num}</p>*/}
                   </div>
                 );

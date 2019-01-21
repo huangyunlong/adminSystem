@@ -7,7 +7,7 @@ import Mock from "mockjs";
 import tool from "../tools/tool.js";
 import admin from "./admin.jpg"
 let publicUrl = "http://93.179.103.52:5000";
-publicUrl = "/api";
+publicUrl = "/manage";
 let loginUrl = publicUrl + "/userLogin";
 import "./login.css";
 const FormItem = Form.Item;

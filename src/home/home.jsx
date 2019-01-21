@@ -58,7 +58,7 @@ class Home extends React.Component {
     return (
       <Layout className="home">
         <Sider style={{ height: "100%", overflow: "auto" }}>
-          <div className="logo">XXX ADMIN SYSTEM</div>
+          <div className="logo">浪漫礼管理平台</div>
           {this.userInfo.userName == "admin" ? (
             <Menu
               theme="dark"
@@ -72,18 +72,18 @@ class Home extends React.Component {
                   <Link to="/home/useCard">使用卡券</Link>
                 </Menu.Item>
               </SubMenu>
-              <SubMenu title="平台信息" key="sub1">
+              {/* <SubMenu title="平台信息" key="sub1">
                 <Menu.Item key="useNotice">
                   <Link to="/home/useNotice">使用须知</Link>
                 </Menu.Item>
                 <Menu.Item key="privacy">
                   <Link to="/home/privacy">隐私权条款</Link>
                 </Menu.Item>
-              </SubMenu>
+              </SubMenu> */}
               <SubMenu title="管理" key="sub2">
-                <Menu.Item key="userManage">
+                {/* <Menu.Item key="userManage">
                   <Link to="/home/userManage">用户管理</Link>
-                </Menu.Item>
+                </Menu.Item> */}
                 <Menu.Item key="themeManage">
                   <Link to="/home/themeManage">主题管理</Link>
                 </Menu.Item>

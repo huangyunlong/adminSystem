@@ -17,7 +17,7 @@ import Mock from "mockjs";
 import tool from "../tools/tool.js";
 import _ from "lodash";
 let publicUrl = "https://sp.tkfun.site/mock/14";
-publicUrl = "/api";
+publicUrl = "/manage";
 let getUrl = publicUrl + "/admin/getData";
 let addUrl = publicUrl + "/admin/addData"; // 新增数据接口地址
 let updateUrl = publicUrl + "/admin/updateData";

@@ -1,20 +1,25 @@
 .orderManage {
     height: 100%;
     box-sizing: border-box;
+
     .orderManage_tables {
         .orderManageTop {
             height: 40px;
             line-height: 40px;
             background: #eee;
+
             .orderList {
                 float: left;
                 color: black;
             }
         }
+
         .orderManage_tableContent {
             box-sizing: border-box;
+
             table {
                 height: calc(100% - 50px);
+
                 .smallImag {
                     height: 60px;
                     border-radius: 50%;
@@ -23,6 +28,7 @@
                     -ms-border-radius: 50%;
                     -o-border-radius: 50%;
                 }
+
                 .ant-table-row {
                     td {
                         word-break: break-all;
@@ -33,23 +39,27 @@
         }
     }
 }
+
 .oderModal {
     .ant-modal-body {
-        max-height:340px;
-        overflow:scroll;
-        overflow-x:hidden;
-      .goodsDetailDesc {
-          display: flex;
-          flex-direction: row;
-          flex-wrap: nowrap;
-          justify-content: space-around;
-          p{
-              flex:1;
-                  .orderImage {
-            margin-left:10px;
-          width: 50px;
+        max-height: 340px;
+        overflow: scroll;
+        overflow-x: hidden;
+
+        .goodsDetailDesc {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            justify-content: space-around;
+
+            p {
+                flex: 1;
+                
+                .orderImage {
+                    margin-left: 10px;
+                    width: 50px;
+                }
+            }
         }
-          }
-      }
     }
-  }
+}

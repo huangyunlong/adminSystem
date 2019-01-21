@@ -10,7 +10,7 @@ import tool from "../tools/tool.js";
 import "./userManage.css";
 const { RangePicker } = DatePicker;
 let publicUrl = "https://sp.tkfun.site/mock/14";
-publicUrl = "/api";
+publicUrl = "/manage";
 let getUrl = publicUrl + "/member/getData";
 @observer
 class UserManage extends React.Component {

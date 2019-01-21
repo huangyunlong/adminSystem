@@ -22,14 +22,14 @@ const { RangePicker } = DatePicker;
 const FormItem = Form.Item;
 
 let publicUrl = "https://sp.tkfun.site/mock/14";
-publicUrl = "/api";
-publicUrl = "https://sp.roseski.com/manage";
+publicUrl = "/manage";
 let addUrl = publicUrl + "/goods/addData"; // 新增数据接口地址
 let updateUrl = publicUrl + "/goods/updateData";
 let deleteUrl = publicUrl + "/theme/deleteData";
 let getUrl = publicUrl + "/goods/getData";
 let getThems = publicUrl + "/theme/getThemeInfo";
-let uploadImgUrl = "/uploadImgApi/images/uploadImg";
+let imagText = publicUrl + "/goods_dtl/getGoodsdtlInfo";
+let uploadImgUrl = "/manage/images/uploadImg";
 
 /**
  * 获取图片的base64地址
@@ -81,7 +81,7 @@ class MyModal extends React.Component {
       this.row = {};
     } else {
       this.row = _.clone(relativeRow);
-      this.row.img_url = this.row.img_url;
+      this.row.pic_url = this.row.pic_url;
     }
   }
   componentDidMount() {}
@@ -96,20 +96,27 @@ class MyModal extends React.Component {
       }
       let newRow = _.assign({}, this.row, values),
         rel = null;
-      newRow.img_url =
-        _.get(newRow, "img_url.file.url") ||
-        _.get(newRow, "img_url.file.response.data[0]") ||
-        newRow.img_url;
+      newRow.background_pic_url =
+        _.get(newRow, "pic_url.file.url") ||
+        _.get(newRow, "pic_url.file.response.data[0]") ||
+        newRow.pic_url;
+      newRow.pic_url =
+        _.get(newRow, "pic_url.file.url") ||
+        _.get(newRow, "pic_url.file.response.data[0]") ||
+        newRow.pic_url;
       newRow.theme_id = newRow.theme;
       delete newRow.theme;
       console.log("newRow");
-      console.log(newRow);
+      console.log(newRow.ewRow);
       // 如果是增加模式
       if (this.addRowMode) {
         delete newRow.dataTime;
-        newRow.limit_start_time = this.timeDate[0]; // 卡券使用开始时间
-        newRow.limit_end_time = this.timeDate[1]; // 卡券使用结束时间
+        newRow.begin_time = this.timeDate[0]; // 卡券使用开始时间
+        newRow.end_time = this.timeDate[1]; // 卡券使用结束时间
         newRow.quantity = Number(this.quantity);
+        newRow.is_show = eval(newRow.is_show.toLowerCase());
+        console.log("增加");
+        console.log(newRow);
         rel = await tool.requestAjaxSync(addUrl, "post", {
           addRow: newRow
         });
@@ -123,10 +130,19 @@ class MyModal extends React.Component {
         this.props.reFetchDataSource();
       } else {
         // 编辑模式
+        let newRows = {
+          is_show: eval(newRow.is_show.toLowerCase()),
+          theme_id: newRow.theme_id,
+          id: newRow.id
+        };
+        console.log("newRows");
+        console.log(newRows);
         rel = await tool.requestAjaxSync(updateUrl, "post", {
-          editRow: newRow
+          editRow: newRows
         });
         rel = rel.data;
+        console.log("rel");
+        console.log(rel);
         if (rel.state == 1) {
           message.success("操作成功");
         } else {
@@ -157,6 +173,12 @@ class MyModal extends React.Component {
       return file;
     });
   }
+  /**
+   * 新增图文说明
+   */
+  addImageText() {
+    console.log("新增");
+  }
   render() {
     let formItemLayout = {
         labelCol: { span: 4 },
@@ -165,13 +187,27 @@ class MyModal extends React.Component {
       { form } = this.props;
     let that = this;
     let Option = Select.Option;
-    let children = [];
-    let cardColorChildren = [];
-    let themesList = this.props.themesList;
+    let children = []; // 主题选择
+    let cardColorChildren = []; // 卡券颜色选择
+    let imageTextListChildren = []; // 图文
+    let themesList = this.props.themesList; // 主题列表
+    let imageTextList = this.props.imageTextList; //图文列表
     for (let i = 0; i < themesList.length; i++) {
       children.push(
         <Option key={Number(themesList[i].id)} value={Number(themesList[i].id)}>
           {themesList[i].theme_name}
+        </Option>
+      );
+    }
+    for (let i = 0; i < imageTextList.length; i++) {
+      imageTextListChildren.push(
+        <Option key={Number(imageTextList[i].id)} value={imageTextList[i].id}>
+          <img
+            className="smallImg"
+            style={{ width: "28px", height: "28px", display: "inline-block" }}
+            src={imageTextList[i].img_url}
+          />
+          <span>{imageTextList[i].goods_dtl}</span>
         </Option>
       );
     }
@@ -244,128 +280,170 @@ class MyModal extends React.Component {
         onCancel={this.handleCancelEditWindow.bind(this)}
       >
         <Form>
-          <FormItem label="商品名称" {...formItemLayout}>
-            {form.getFieldDecorator("title", {
-              rules: [
-                {
-                  required: true,
-                  message: "不能为空"
-                }
-              ],
-              initialValue: this.row["title"]
-            })(<Input placeholder="不能为空" />)}
-          </FormItem>
-          <FormItem label="商品价格" {...formItemLayout}>
-            {form.getFieldDecorator("price", {
-              rules: [
-                {
-                  required: true,
-                  message: "不能为空"
-                }
-              ],
-              initialValue: this.row["price"]
-            })(<Input placeholder="不能为空,单位为分" />)}
-          </FormItem>
-          <FormItem label="商品描述" {...formItemLayout}>
-            {form.getFieldDecorator("description", {
-              rules: [
-                {
-                  required: true,
-                  message: "不能为空"
-                }
-              ],
-              initialValue: this.row["description"]
-            })(<Input placeholder="不能为空" />)}
-          </FormItem>
-          <FormItem label="商品使用须知" {...formItemLayout}>
-            {form.getFieldDecorator("notice", {
-              rules: [
-                {
-                  required: true,
-                  max: 20,
-                  min: 1,
-                  message: "不能为空,最多16个字符!"
-                }
-              ],
-              initialValue: this.row["notice"]
-            })(<Input placeholder="不能为空" />)}
-          </FormItem>
-          <FormItem label="卡券颜色" {...formItemLayout}>
-            {form.getFieldDecorator("color", {
-              rules: [
-                {
-                  required: true,
-                  message: "不能为空"
-                }
-              ],
-              initialValue: this.row["color"]
-            })(
-              <Select style={{ width: "100%" }} placeholder="请选择卡券的颜色">
-                {cardColorChildren}
-              </Select>
-            )}
-          </FormItem>
-          <FormItem label="缩略图(1:1)" {...formItemLayout}>
-            {form.getFieldDecorator("pic_url", {
-              rules: [
-                {
-                  required: true,
-                  validator: (rule, value, callback) => {
-                    if (value == null) {
-                      callback("图片不能为空");
-                      return;
-                    }
-                    callback();
+          {this.addRowMode == true ? (
+            <FormItem label="商品名称" {...formItemLayout}>
+              {form.getFieldDecorator("title", {
+                rules: [
+                  {
+                    required: true,
+                    message: "不能为空"
                   }
-                }
-              ],
-              // valuePropName: "fileList",
-              initialValue: this.row.pic_url
-              // getValueFromEvent: e => {
-              //   console.log('e');
-              //   console.log(e)
-              //   let array = [];
-              //   if (Array.isArray(e)) {
-              //     array = e;
-              //   } else {
-              //     array = e.fileList;
-              //   }
-              //   array = array.filter(item => {
-              //     return item.uid;
-              //   });
-              //   return array;
-              // }
-            })(
-              <Upload
-                action={uploadImgUrl}
-                listType="picture-card"
-                className="avatar-uploader"
-                beforeUpload={beforeUpload}
-                showUploadList={false}
-                onChange={this.handleUploadChange.bind(this, this.row)}
-                onPreview={file => {
-                  var html = `<html><body>
+                ],
+                initialValue: this.row["title"]
+              })(<Input placeholder="不能为空" />)}
+            </FormItem>
+          ) : (
+            ""
+          )}
+          {this.addRowMode == true ? (
+            <FormItem label="商品价格" {...formItemLayout}>
+              {form.getFieldDecorator("price", {
+                rules: [
+                  {
+                    required: true,
+                    message: "不能为空"
+                  }
+                ],
+                initialValue: this.row["price"]
+              })(<Input placeholder="不能为空,单位为分" />)}
+            </FormItem>
+          ) : (
+            ""
+          )}
+          {this.addRowMode == true ? (
+            <FormItem label="商品描述" {...formItemLayout}>
+              {form.getFieldDecorator("description", {
+                rules: [
+                  {
+                    required: true,
+                    message: "不能为空"
+                  }
+                ],
+                initialValue: this.row["description"]
+              })(<Input placeholder="不能为空" />)}
+            </FormItem>
+          ) : (
+            ""
+          )}
+          {this.addRowMode == true ? (
+            <FormItem label="商品使用须知" {...formItemLayout}>
+              {form.getFieldDecorator("notice", {
+                rules: [
+                  {
+                    required: true,
+                    max: 20,
+                    min: 1,
+                    message: "不能为空,最多16个字符!"
+                  }
+                ],
+                initialValue: this.row["notice"]
+              })(<Input placeholder="不能为空" />)}
+            </FormItem>
+          ) : (
+            ""
+          )}
+          {this.addRowMode == true ? (
+            <FormItem label="卡券颜色" {...formItemLayout}>
+              {form.getFieldDecorator("color", {
+                rules: [
+                  {
+                    required: true,
+                    message: "不能为空"
+                  }
+                ],
+                initialValue: this.row["color"]
+              })(
+                <Select
+                  style={{ width: "100%" }}
+                  placeholder="请选择卡券的颜色"
+                >
+                  {cardColorChildren}
+                </Select>
+              )}
+            </FormItem>
+          ) : (
+            ""
+          )}
+          {this.addRowMode == true ? (
+            <FormItem label="缩略图(1:1)" {...formItemLayout}>
+              {form.getFieldDecorator("pic_url", {
+                rules: [
+                  {
+                    required: true,
+                    validator: (rule, value, callback) => {
+                      if (value == null) {
+                        callback("图片不能为空");
+                        return;
+                      }
+                      callback();
+                    }
+                  }
+                ],
+                // valuePropName: "fileList",
+                initialValue: this.row.pic_url
+                // getValueFromEvent: e => {
+                //   console.log('e');
+                //   console.log(e)
+                //   let array = [];
+                //   if (Array.isArray(e)) {
+                //     array = e;
+                //   } else {
+                //     array = e.fileList;
+                //   }
+                //   array = array.filter(item => {
+                //     return item.uid;
+                //   });
+                //   return array;
+                // }
+              })(
+                <Upload
+                  action={uploadImgUrl}
+                  listType="picture-card"
+                  className="avatar-uploader"
+                  beforeUpload={beforeUpload}
+                  showUploadList={false}
+                  onChange={this.handleUploadChange.bind(this, this.row)}
+                  onPreview={file => {
+                    var html = `<html><body>
                           <img width="100%" src="${file.goods_name}" />
                         </body></html>`;
-                  let a = window.open();
-                  a.document.write(html);
-                }}
-              >
-                {this.row.pic_url ? (
-                  <img
-                    style={{ width: "100px", height: "100px" }}
-                    src={this.row.pic_url}
-                    alt=""
-                  />
-                ) : (
-                  <div>
-                    <Icon type={this.addImageLoading ? "loading" : "plus"} />
-                    <div className="ant-upload-text">上传</div>
-                  </div>
-                )}
-              </Upload>
-            )}
-          </FormItem>
+                    let a = window.open();
+                    a.document.write(html);
+                  }}
+                >
+                  {this.row.pic_url ? (
+                    <img
+                      style={{ width: "100px", height: "100px" }}
+                      src={this.row.pic_url}
+                      alt=""
+                    />
+                  ) : (
+                    <div>
+                      <Icon type={this.addImageLoading ? "loading" : "plus"} />
+                      <div className="ant-upload-text">上传</div>
+                    </div>
+                  )}
+                </Upload>
+              )}
+            </FormItem>
+          ) : (
+            ""
+          )}
+          {this.addRowMode == true ? (
+            <FormItem label="图文说明" {...formItemLayout}>
+              {form.getFieldDecorator("img_text", {
+                rules: [
+                  {
+                    required: true,
+                    message: "不能为空"
+                  }
+                ],
+                initialValue: this.row["img_text"]
+              })(<Input placeholder="图文说明" />)}
+            </FormItem>
+          ) : (
+            ""
+          )}
           <FormItem label="所属主题" {...formItemLayout}>
             {form.getFieldDecorator("theme", {
               rules: [
@@ -405,34 +483,8 @@ class MyModal extends React.Component {
               </Select>
             )}
           </FormItem>
-          <FormItem label="图文说明" {...formItemLayout}>
-            {form.getFieldDecorator("text_image_list", {
-              rules: [
-                {
-                  required: true,
-                  message: "不能为空"
-                }
-              ],
-              initialValue: this.row['text_image_list']
-            })(
-              <Select
-                mode="multiple"
-                style={{ width: "100%" }}
-                placeholder="请选择主题名称"
-              >
-                {children}
-              </Select>
-            )}
-          </FormItem>
-          {this.addRowMode == true ? (
-            <FormItem label="新增图文说明(可选项)" {...formItemLayout}>
-                <Button type="primary">新增图文说明</Button>
-            </FormItem>
-          ):(
-            ""
-          )}
           <FormItem label="状态" {...formItemLayout}>
-            {form.getFieldDecorator("status", {
+            {form.getFieldDecorator("is_show", {
               rules: [
                 {
                   required: true,
@@ -516,7 +568,8 @@ class MyTable extends React.Component {
   @observable editWindowVisible = false; // 是否打开编辑行窗口
   @observable dataSource = []; // 表体
   @observable columns = []; // 表头
-  @observable themesList = [];
+  @observable themesList = []; // 主题列表
+  @observable imageTextList = []; // 图文
   @observable
   pagination = {
     showSizeChanger: true,
@@ -628,7 +681,8 @@ class MyTable extends React.Component {
         sorter: true, // 是否可排序
         align: "center", // 列文字排版
         render: text => {
-          return <span>{text} 分</span>;
+          let yuan = text/100.0;
+          return <span>{yuan.toFixed(2)} 元</span>;
         }
       },
       {
@@ -728,8 +782,8 @@ class MyTable extends React.Component {
       },
       {
         title: "图文说明",
-        dataIndex: "text_image_list",
-        key: "text_image_list",
+        dataIndex: "img_text",
+        key: "img_text",
         align: "center",
         width: 120
         // render: (text, row, index) => {
@@ -836,7 +890,10 @@ class MyTable extends React.Component {
     this.loading = false;
     this.lastRequestTableParams = params;
   }
-
+  async getImageText() {
+    let rel = await tool.requestAjaxSync(imagText, "get", {});
+    this.imageTextList = rel.data;
+  }
   initTable() {
     this.defineColumns();
     this.tableX = 0;
@@ -844,6 +901,7 @@ class MyTable extends React.Component {
       this.tableX += item.width || 100;
     });
     this.tableX += 100;
+    this.getImageText();
     this.fetchDataSource({
       pageSize: 10,
       page: 1
@@ -903,7 +961,8 @@ class MyTable extends React.Component {
           placeholder={`搜索 【${searchTitle}】`}
           value={selectedKeys[0]}
           onChange={e =>
-            setSelectedKeys(e.target.value ? [e.target.value] : [])}
+            setSelectedKeys(e.target.value ? [e.target.value] : [])
+          }
           onPressEnter={() => confirm()}
           style={{ width: 188, marginBottom: 8, display: "block" }}
         />
@@ -977,6 +1036,7 @@ class MyTable extends React.Component {
             }}
             columns={this.columns}
             themesList={this.themesList}
+            imageTextList={this.imageTextList}
           />
         ) : (
           ""

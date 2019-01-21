@@ -22,8 +22,10 @@ class MyForm extends React.Component {
       if (error) {
         return;
       }
+      let card_code = values.card_code;
+      card_code = card_code.replace(/[ ]/gi, "");
       let data = await tool.requestAjaxSync("/sp/coupon/consume", "get", {
-        card_code: values.card_code
+        card_code: card_code
       });
       data = data.data;
       if (data.code == "0000") {
@@ -48,8 +50,8 @@ class MyForm extends React.Component {
   render() {
     let { form } = this.props;
     let formLayout = {
-      labelCol: { span: 5 },
-      wrapperCol: { span: 19 }
+      labelCol: { span: 1 },
+      wrapperCol: { span: 23 }
     };
     return (
       <Row
@@ -58,15 +60,38 @@ class MyForm extends React.Component {
         align="middle"
         justify="center"
       >
-        <Form layout="horizontal" style={{ width: "40%" }}>
-          <FormItem label="卡券码" {...formLayout}>
+        <Form layout="horizontal" style={{ width: "50%" }}>
+          <FormItem label="" {...formLayout}>
             {form.getFieldDecorator("card_code", {
               rules: [
                 {
                   required: true,
-                  message: "不能为空"
+                  validator: (rule, value, callback) => {
+                    value = value.replace(/[ ]/gi, "");
+                    if (value.length != 12 || !/^[0-9]{12,12}$/.test(value)) {
+                      callback("请输入12位由数字组成的卡券码");
+                      return;
+                    }
+                    callback();
+                  }
                 }
               ],
+              getValueFromEvent: e => {
+                let value = e.target.value;
+                let step = 1;
+                for (var i = 0; i < value.length; i++, step++) {
+                  if (step == 4) {
+                    if (value[i + 1] == null) {
+                      let str = value.split("");
+                      str.push(" ");
+                      value = str.join("");
+                      i++;
+                    }
+                    step = -1;
+                  }
+                }
+                return value;
+              },
               initialValue: ""
             })(
               <Input
@@ -74,11 +99,12 @@ class MyForm extends React.Component {
                 autoComplete="off"
                 placeholder="输入卡券码"
                 onPressEnter={this.submitForm}
+                style={{ height: 50 }}
               />
             )}
           </FormItem>
           <FormItem label=" " colon={false} {...formLayout}>
-            <div style={{ float: "right" }}>
+            <div style={{ marginLeft: "30%" }}>
               <Button style={{ marginRight: 10 }} onClick={this.resetForm}>
                 重置
               </Button>
