@@ -23,6 +23,7 @@ const FormItem = Form.Item;
 
 let publicUrl = "https://sp.tkfun.site/mock/14";
 publicUrl = "/api";
+publicUrl = "https://sp.roseski.com/manage";
 let addUrl = publicUrl + "/goods/addData"; // 新增数据接口地址
 let updateUrl = publicUrl + "/goods/updateData";
 let deleteUrl = publicUrl + "/theme/deleteData";
@@ -101,11 +102,13 @@ class MyModal extends React.Component {
         newRow.img_url;
       newRow.theme_id = newRow.theme;
       delete newRow.theme;
+      console.log("newRow");
+      console.log(newRow);
       // 如果是增加模式
       if (this.addRowMode) {
         delete newRow.dataTime;
-        newRow.limit_start_time	= this.timeDate[0]; // 卡券使用开始时间
-        newRow.limit_end_time = this.timeDate[1];// 卡券使用结束时间
+        newRow.limit_start_time = this.timeDate[0]; // 卡券使用开始时间
+        newRow.limit_end_time = this.timeDate[1]; // 卡券使用结束时间
         newRow.quantity = Number(this.quantity);
         rel = await tool.requestAjaxSync(addUrl, "post", {
           addRow: newRow
@@ -149,7 +152,7 @@ class MyModal extends React.Component {
       if (file.response) {
         this.addImageLoading = false;
         file.url = file.response.data[0];
-        row.img_url = file.url;
+        row.pic_url = file.url;
       }
       return file;
     });
@@ -161,8 +164,9 @@ class MyModal extends React.Component {
       },
       { form } = this.props;
     let that = this;
-    var Option = Select.Option;
-    var children = [];
+    let Option = Select.Option;
+    let children = [];
+    let cardColorChildren = [];
     let themesList = this.props.themesList;
     for (let i = 0; i < themesList.length; i++) {
       children.push(
@@ -171,7 +175,63 @@ class MyModal extends React.Component {
         </Option>
       );
     }
-
+    let cardColorList = [
+      {
+        cardName: "#63B359",
+        id: "Color010"
+      },
+      {
+        cardName: "#2C9F67",
+        id: "Color020"
+      },
+      {
+        cardName: "#509FC9",
+        id: "Color030"
+      },
+      {
+        cardName: "#5885CF",
+        id: "Color040"
+      },
+      {
+        cardName: "#9062C0",
+        id: "Color050"
+      },
+      {
+        cardName: "#D09A45",
+        id: "Color060"
+      },
+      {
+        cardName: "#E4B138",
+        id: "Color070"
+      },
+      {
+        cardName: "#EE903C",
+        id: "Color080"
+      },
+      {
+        cardName: "#DD6549",
+        id: "Color090"
+      },
+      {
+        cardName: "#CC463D",
+        id: "Color100"
+      }
+    ];
+    for (let i = 0; i < cardColorList.length; i++) {
+      cardColorChildren.push(
+        <Option
+          key={cardColorList[i].id}
+          value={cardColorList[i].id}
+          style={{
+            width: "100px",
+            height: "50px",
+            background: cardColorList[i].cardName
+          }}
+        >
+          {cardColorList[i].cardName}
+        </Option>
+      );
+    }
     return (
       <Modal
         destroyOnClose
@@ -185,14 +245,14 @@ class MyModal extends React.Component {
       >
         <Form>
           <FormItem label="商品名称" {...formItemLayout}>
-            {form.getFieldDecorator("goods_name", {
+            {form.getFieldDecorator("title", {
               rules: [
                 {
                   required: true,
                   message: "不能为空"
                 }
               ],
-              initialValue: this.row["goods_name"]
+              initialValue: this.row["title"]
             })(<Input placeholder="不能为空" />)}
           </FormItem>
           <FormItem label="商品价格" {...formItemLayout}>
@@ -207,23 +267,51 @@ class MyModal extends React.Component {
             })(<Input placeholder="不能为空,单位为分" />)}
           </FormItem>
           <FormItem label="商品描述" {...formItemLayout}>
-            {form.getFieldDecorator("goods_desc", {
+            {form.getFieldDecorator("description", {
               rules: [
                 {
                   required: true,
                   message: "不能为空"
                 }
               ],
-              initialValue: this.row["goods_desc"]
+              initialValue: this.row["description"]
             })(<Input placeholder="不能为空" />)}
           </FormItem>
+          <FormItem label="商品使用须知" {...formItemLayout}>
+            {form.getFieldDecorator("notice", {
+              rules: [
+                {
+                  required: true,
+                  max: 20,
+                  min: 1,
+                  message: "不能为空,最多16个字符!"
+                }
+              ],
+              initialValue: this.row["notice"]
+            })(<Input placeholder="不能为空" />)}
+          </FormItem>
+          <FormItem label="卡券颜色" {...formItemLayout}>
+            {form.getFieldDecorator("color", {
+              rules: [
+                {
+                  required: true,
+                  message: "不能为空"
+                }
+              ],
+              initialValue: this.row["color"]
+            })(
+              <Select style={{ width: "100%" }} placeholder="请选择卡券的颜色">
+                {cardColorChildren}
+              </Select>
+            )}
+          </FormItem>
           <FormItem label="缩略图(1:1)" {...formItemLayout}>
-            {form.getFieldDecorator("img_url", {
+            {form.getFieldDecorator("pic_url", {
               rules: [
                 {
                   required: true,
                   validator: (rule, value, callback) => {
-                    if (value == null ) {
+                    if (value == null) {
                       callback("图片不能为空");
                       return;
                     }
@@ -232,7 +320,7 @@ class MyModal extends React.Component {
                 }
               ],
               // valuePropName: "fileList",
-              initialValue: this.row.img_url
+              initialValue: this.row.pic_url
               // getValueFromEvent: e => {
               //   console.log('e');
               //   console.log(e)
@@ -263,10 +351,10 @@ class MyModal extends React.Component {
                   a.document.write(html);
                 }}
               >
-                {this.row.img_url ? (
+                {this.row.pic_url ? (
                   <img
                     style={{ width: "100px", height: "100px" }}
-                    src={this.row.img_url}
+                    src={this.row.pic_url}
                     alt=""
                   />
                 ) : (
@@ -317,6 +405,32 @@ class MyModal extends React.Component {
               </Select>
             )}
           </FormItem>
+          <FormItem label="图文说明" {...formItemLayout}>
+            {form.getFieldDecorator("text_image_list", {
+              rules: [
+                {
+                  required: true,
+                  message: "不能为空"
+                }
+              ],
+              initialValue: this.row['text_image_list']
+            })(
+              <Select
+                mode="multiple"
+                style={{ width: "100%" }}
+                placeholder="请选择主题名称"
+              >
+                {children}
+              </Select>
+            )}
+          </FormItem>
+          {this.addRowMode == true ? (
+            <FormItem label="新增图文说明(可选项)" {...formItemLayout}>
+                <Button type="primary">新增图文说明</Button>
+            </FormItem>
+          ):(
+            ""
+          )}
           <FormItem label="状态" {...formItemLayout}>
             {form.getFieldDecorator("status", {
               rules: [
@@ -325,13 +439,13 @@ class MyModal extends React.Component {
                   message: "不能为空"
                 }
               ],
-              initialValue: this.row["status"]
+              initialValue: this.row["is_show"] == true ? "true" : "false"
             })(
               <Select placeholder="请选择状态">
-                <Select.Option value="UP" key={Math.random()}>
+                <Select.Option value="true" key={Math.random()}>
                   上架
                 </Select.Option>
-                <Select.Option value="DOWN" key={Math.random()}>
+                <Select.Option value="false" key={Math.random()}>
                   下架
                 </Select.Option>
               </Select>
@@ -498,8 +612,8 @@ class MyTable extends React.Component {
     this.columns = [
       {
         title: "商品名称",
-        dataIndex: "goods_name", // dataIndex 和 key 需要一致
-        key: "goods_name",
+        dataIndex: "title", // dataIndex 和 key 需要一致
+        key: "title",
         filterType: "string", // 表示过滤字符串,string,date
         width: 150,
         sorter: true, // 是否可排序
@@ -513,18 +627,18 @@ class MyTable extends React.Component {
         width: 150,
         sorter: true, // 是否可排序
         align: "center", // 列文字排版
-        render:text=>{
-          return <span>{text} 分</span>
+        render: text => {
+          return <span>{text} 分</span>;
         }
       },
       {
         title: "缩略图",
-        dataIndex: "img_url",
-        key: "img_url",
+        dataIndex: "pic_url",
+        key: "pic_url",
         align: "center",
         width: 150,
         render: (text, row, index) => {
-          let imgUrl = row.img_url;
+          let imgUrl = row.pic_url;
           return (
             <a href={imgUrl} target="__blank">
               <img className="smallImg" src={imgUrl} />
@@ -534,11 +648,68 @@ class MyTable extends React.Component {
       },
       {
         title: "商品描述",
-        dataIndex: "goods_desc", // dataIndex 和 key 需要一致
-        key: "goods_desc",
+        dataIndex: "description", // dataIndex 和 key 需要一致
+        key: "description",
         width: 150,
         sorter: true, // 是否可排序
         align: "center" // 列文字排版
+      },
+      {
+        title: "商品使用须知",
+        dataIndex: "notice", // dataIndex 和 key 需要一致
+        key: "notice",
+        width: 150,
+        sorter: true, // 是否可排序
+        align: "center" // 列文字排版
+      },
+      {
+        title: "卡券颜色",
+        dataIndex: "color", // dataIndex 和 key 需要一致
+        key: "color",
+        width: 150,
+        sorter: true, // 是否可排序
+        align: "center", // 列文字排版
+        render: text => {
+          let cardColor = text;
+          switch (text) {
+            case "Color010":
+              cardColor = "#63B359";
+              break;
+            case "Color020":
+              cardColor = "#2C9F67";
+              break;
+            case "Color030":
+              cardColor = "#509FC9";
+              break;
+            case "Color040":
+              cardColor = "#5885CF";
+              break;
+            case "Color050":
+              cardColor = "#9062C0";
+              break;
+            case "Color060":
+              cardColor = "#D09A45";
+              break;
+            case "Color070":
+              cardColor = "#E4B138";
+              break;
+            case "Color080":
+              cardColor = "#EE903C";
+              break;
+            case "Color090":
+              cardColor = "#DD6549";
+              break;
+            case "Color100":
+              cardColor = "#CC463D";
+              break;
+          }
+          return (
+            <span
+              className="cardColorStyle"
+              style={{ background: cardColor }}
+            />
+          );
+        }
       },
       {
         title: "所属主题",
@@ -549,31 +720,46 @@ class MyTable extends React.Component {
         render: (text, row, index) => {
           let str = "";
           row.theme.map(item => {
-            str += item.theme_name + "、";
+            str += item.title + "、";
           });
           str = str.substring(0, str.length - 1);
           return <span>{str}</span>;
         }
       },
       {
+        title: "图文说明",
+        dataIndex: "text_image_list",
+        key: "text_image_list",
+        align: "center",
+        width: 120
+        // render: (text, row, index) => {
+        //   let str = "";
+        //   row.theme.map(item => {
+        //     str += item.title + "、";
+        //   });
+        //   str = str.substring(0, str.length - 1);
+        //   return <span>{str}</span>;
+        // }
+      },
+      {
         title: "状态",
-        dataIndex: "status",
-        key: "status",
+        dataIndex: "is_show",
+        key: "is_show",
         align: "center",
         sorter: true,
         width: 150,
         render: text => {
           let relText = "";
           switch (text) {
-            case "UP":
+            case true:
               relText = "上架";
               break;
-            case "DOWN":
+            case false:
               relText = "下架";
               break;
           }
           return (
-            <span style={{ color: text == "UP" ? "#237804" : "" }}>
+            <span style={{ color: text == "true" ? "#237804" : "" }}>
               {relText}
             </span>
           );
@@ -717,8 +903,7 @@ class MyTable extends React.Component {
           placeholder={`搜索 【${searchTitle}】`}
           value={selectedKeys[0]}
           onChange={e =>
-            setSelectedKeys(e.target.value ? [e.target.value] : [])
-          }
+            setSelectedKeys(e.target.value ? [e.target.value] : [])}
           onPressEnter={() => confirm()}
           style={{ width: 188, marginBottom: 8, display: "block" }}
         />
