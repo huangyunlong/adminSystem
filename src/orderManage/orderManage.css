@@ -45,6 +45,10 @@
           justify-content: space-around;
           p{
               flex:1;
+                  .orderImage {
+            margin-left:10px;
+          width: 50px;
+        }
           }
       }
     }
