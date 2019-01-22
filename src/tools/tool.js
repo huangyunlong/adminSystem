@@ -111,33 +111,25 @@ function requestBasicAjaxSync(url, method, params) {
   })
 }
 
-function dateToString(time, format) {
-  var t = new Date(time);
-  var tf = function (i) {
-    return (i < 10 ? '0' : '') + i
-  };
-  return format.replace(/yyyy|MM|dd|HH|mm|ss/g, function (a) {
-    switch (a) {
-      case 'yyyy':
-        return tf(t.getFullYear());
-        break;
-      case 'MM':
-        return tf(t.getMonth() + 1);
-        break;
-      case 'mm':
-        return tf(t.getMinutes());
-        break;
-      case 'dd':
-        return tf(t.getDate());
-        break;
-      case 'HH':
-        return tf(t.getHours());
-        break;
-      case 'ss':
-        return tf(t.getSeconds());
-        break;
-    }
-  })
+/**
+ * 输出指定格式的日期
+ *
+ * @param {any} dateObj new Date()
+ * @param {any} format 'yyyy-MM-dd hh:mm:ss'
+ * @returns
+ */
+function dateToString(dateObj, format) {
+    var z = {
+        y: dateObj.getFullYear(),
+        M: dateObj.getMonth() + 1,
+        d: dateObj.getDate(),
+        h: dateObj.getHours(),
+        m: dateObj.getMinutes(),
+        s: dateObj.getSeconds()
+    };
+    return format.replace(/(y+|M+|d+|h+|m+|s+)/g, function (v) {
+        return ((v.length > 1 ? '0' : '') + eval('z.' + v.slice(-1))).slice(-(v.length > 2 ? v.length : 2))
+    });
 }
 export default {
   requestAjaxSync,
