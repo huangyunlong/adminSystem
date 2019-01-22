@@ -11,18 +11,21 @@ import {
   Icon,
   Table,
   Input,
-  Button
+  Button,
+  Radio
 } from "antd";
 import tool from "../tools/tool.js";
 import Mock from "mockjs";
+import admin from "./admin.jpg";
 import "./goodsManage.css";
 import MyRichText from "../components/myRichText/myRichText.jsx";
 const { RangePicker } = DatePicker;
 
 const FormItem = Form.Item;
-
+const RadioGroup = Radio.Group;
 let publicUrl = "https://sp.tkfun.site/mock/14";
 publicUrl = "/manage";
+publicUrl = "https://sp.roseski.com/manage";
 let addUrl = publicUrl + "/goods/addData"; // 新增数据接口地址
 let updateUrl = publicUrl + "/goods/updateData";
 let deleteUrl = publicUrl + "/theme/deleteData";
@@ -173,12 +176,6 @@ class MyModal extends React.Component {
       return file;
     });
   }
-  /**
-   * 新增图文说明
-   */
-  addImageText() {
-    console.log("新增");
-  }
   render() {
     let formItemLayout = {
         labelCol: { span: 4 },
@@ -189,25 +186,14 @@ class MyModal extends React.Component {
     let Option = Select.Option;
     let children = []; // 主题选择
     let cardColorChildren = []; // 卡券颜色选择
-    let imageTextListChildren = []; // 图文
     let themesList = this.props.themesList; // 主题列表
-    let imageTextList = this.props.imageTextList; //图文列表
+    let imgList = this.props.imgList; // 图片列表
+    console.log('imglist');
+    console.log(imgList)
     for (let i = 0; i < themesList.length; i++) {
       children.push(
         <Option key={Number(themesList[i].id)} value={Number(themesList[i].id)}>
           {themesList[i].theme_name}
-        </Option>
-      );
-    }
-    for (let i = 0; i < imageTextList.length; i++) {
-      imageTextListChildren.push(
-        <Option key={Number(imageTextList[i].id)} value={imageTextList[i].id}>
-          <img
-            className="smallImg"
-            style={{ width: "28px", height: "28px", display: "inline-block" }}
-            src={imageTextList[i].img_url}
-          />
-          <span>{imageTextList[i].goods_dtl}</span>
         </Option>
       );
     }
@@ -259,11 +245,16 @@ class MyModal extends React.Component {
           key={cardColorList[i].id}
           value={cardColorList[i].id}
           style={{
-            width: "100px",
+            width: "100%",
             height: "50px",
             background: cardColorList[i].cardName
           }}
         >
+          <input
+            type="color"
+            key={cardColorList[i].id}
+            defaultValue={cardColorList[i].cardName}
+          />
           {cardColorList[i].cardName}
         </Option>
       );
@@ -353,10 +344,7 @@ class MyModal extends React.Component {
                 ],
                 initialValue: this.row["color"]
               })(
-                <Select
-                  style={{ width: "100%" }}
-                  placeholder="请选择卡券的颜色"
-                >
+                <Select style={{ width: "100%" }} placeholder="请选择卡券的颜色">
                   {cardColorChildren}
                 </Select>
               )}
@@ -430,6 +418,40 @@ class MyModal extends React.Component {
             ""
           )}
           {this.addRowMode == true ? (
+            <FormItem label="请选择缩略图" {...formItemLayout}>
+              {form.getFieldDecorator("pic_url1", {
+                rules: [
+                  {
+                    required: true,
+                    validator: (rule, value, callback) => {
+                      if (value == null) {
+                        callback("图片不能为空");
+                        return;
+                      }
+                      callback();
+                    }
+                  }
+                ],
+                initialValue: this.props.imgList[2].id
+              })(
+                <RadioGroup name="radiogroup" className="radioSelect">
+                  {this.props.imgList.map(item => {
+                    console.log('item')
+                    console.log(this.imgList)
+                    console.log(item)                    
+                    return (
+                      <Radio value={item.id} key={item.id}>
+                        <img src={item.img} alt="1" />
+                      </Radio>
+                    );
+                  })}
+                </RadioGroup>
+              )}
+            </FormItem>
+          ) : (
+            ""
+          )}
+          {this.addRowMode == true ? (
             <FormItem label="图文说明" {...formItemLayout}>
               {form.getFieldDecorator("img_text", {
                 rules: [
@@ -448,7 +470,7 @@ class MyModal extends React.Component {
             {form.getFieldDecorator("theme", {
               rules: [
                 {
-                  required: true,
+                  required: false,
                   message: "不能为空"
                 }
               ],
@@ -569,7 +591,13 @@ class MyTable extends React.Component {
   @observable dataSource = []; // 表体
   @observable columns = []; // 表头
   @observable themesList = []; // 主题列表
-  @observable imageTextList = []; // 图文
+  @observable imgList = (function(){
+    let arr = [];
+    for(var i=0; i<10; i++){
+      arr.push({id:i,img:admin})
+    }
+    return arr;
+  })();
   @observable
   pagination = {
     showSizeChanger: true,
@@ -676,12 +704,11 @@ class MyTable extends React.Component {
         title: "价格",
         dataIndex: "price", // dataIndex 和 key 需要一致
         key: "price",
-        filterType: "string", // 表示过滤字符串,string,date
         width: 150,
         sorter: true, // 是否可排序
         align: "center", // 列文字排版
         render: text => {
-          let yuan = text/100.0;
+          let yuan = text / 100.0;
           return <span>{yuan.toFixed(2)} 元</span>;
         }
       },
@@ -876,6 +903,8 @@ class MyTable extends React.Component {
       getTableDataParams: params
     });
     let rel = await tool.requestAjaxSync(getThems, "get", {});
+    // let rel1 = await tool.requestAjaxSync(getImage,"get",{})
+    // this.imgList = _.clone(rel1.data)
     this.themesList = _.clone(rel.data);
     data = data.data;
     console.log("data");
@@ -890,10 +919,6 @@ class MyTable extends React.Component {
     this.loading = false;
     this.lastRequestTableParams = params;
   }
-  async getImageText() {
-    let rel = await tool.requestAjaxSync(imagText, "get", {});
-    this.imageTextList = rel.data;
-  }
   initTable() {
     this.defineColumns();
     this.tableX = 0;
@@ -901,7 +926,6 @@ class MyTable extends React.Component {
       this.tableX += item.width || 100;
     });
     this.tableX += 100;
-    this.getImageText();
     this.fetchDataSource({
       pageSize: 10,
       page: 1
@@ -961,8 +985,7 @@ class MyTable extends React.Component {
           placeholder={`搜索 【${searchTitle}】`}
           value={selectedKeys[0]}
           onChange={e =>
-            setSelectedKeys(e.target.value ? [e.target.value] : [])
-          }
+            setSelectedKeys(e.target.value ? [e.target.value] : [])}
           onPressEnter={() => confirm()}
           style={{ width: 188, marginBottom: 8, display: "block" }}
         />
@@ -1036,7 +1059,7 @@ class MyTable extends React.Component {
             }}
             columns={this.columns}
             themesList={this.themesList}
-            imageTextList={this.imageTextList}
+            imgList={this.imgList}
           />
         ) : (
           ""
