@@ -83,7 +83,8 @@ class OrderManage extends React.Component {
         width: "12%",
         align: "center",
         render:(text)=>{
-          return <span>{text/100}元</span>
+          let yuan = text / 100.0;
+          return <span>{yuan.toFixed(2)}元</span>
         }
       },
       // {
@@ -102,7 +103,7 @@ class OrderManage extends React.Component {
         filterType: "date",
         render:(text)=>{
           text = Number(text)
-          return <span>{tool.dateToString(new Date(text*1000),'yyyy-MM-dd HH:mm:ss')}</span>
+          return <span>{tool.dateToString(new Date(text*1000),'yyyy-MM-dd hh:mm:ss')}</span>
         }
       },
       {
@@ -322,6 +323,7 @@ class OrderManage extends React.Component {
               width={600}
             >
               {this.goodsDetailList.map(item => {
+                let yuan = item.price/100.0;
                 return (
                   <div className="goodsDetailDesc" key={item.key}>
                     <p>
@@ -330,7 +332,7 @@ class OrderManage extends React.Component {
                         <img className="orderImage" src={item.background_pic_url} />
                       </a>
                     </p>
-                    <p>商品价格：{item.price/100}元</p>
+                    <p>商品价格：{yuan.toFixed(2)}元</p>
                     {/*<p>商品数量：{item.goods_num}</p>*/}
                   </div>
                 );
